@@ -1,7 +1,7 @@
 function App() {
   return (
     <div>
-      <h1>BigHouse :3</h1>
+      <h1>BidHouse :3</h1>
     </div>
   )
 }

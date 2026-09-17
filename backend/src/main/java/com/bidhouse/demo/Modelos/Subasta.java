@@ -1,4 +1,4 @@
-package com.bidhouse.demo.modelos;
+package com.bidhouse.demo.Modelos;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
