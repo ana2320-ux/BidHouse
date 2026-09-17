@@ -1,4 +1,4 @@
-package com.bidhouse.demo;
+package com.bidhouse.demo.controladores;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
