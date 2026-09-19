@@ -1,25 +1,52 @@
+import { useEffect, useState } from 'react';
 import './Perfil.css';
 
+// Definimos qué forma tiene la respuesta que esperamos de Java
+interface UsuarioData {
+  nombre: string;
+  apellido: string;
+  descripcion: string;
+  username: string;
+}
+
 export default function Perfil() {
+  // Estado para guardar los datos. Inicia en null mientras carga.
+  const [usuario, setUsuario] = useState<UsuarioData | null>(null);
+
+  useEffect(() => {
+    // Hacemos la petición HTTP GET a Spring Boot
+    fetch('http://localhost:8080/api/usuarios/perfil')
+      .then(respuesta => respuesta.json())
+      .then(datos => setUsuario(datos))
+      .catch(error => console.error("Error conectando al backend:", error));
+  }, []);
+
+  // Si aún no ha llegado la respuesta de Java, mostramos un mensaje de carga
+  if (!usuario) {
+    return <main className="bh-container profile-page"><h2>Cargando perfil seguro...</h2></main>;
+  }
+
   return (
     <main className="bh-container profile-page">
       {/* Encabezado del Perfil */}
       <header className="profile-header">
         <div className="profile-user">
+          {/* Imagen de perfil, random por ahora*/}
           <img 
             src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" 
-            alt="Alejandro Montes" 
+            alt="Avatar" 
             className="profile-avatar"
           />
           <div className="profile-info">
             <div className="profile-name-row">
-              <h1>Hola, Alejandro Montes</h1>
+              {/* Aquí inyectamos las variables dinámicas que llegaron del backend :p*/}
+              <h1>Hola, {usuario.nombre} {usuario.apellido}</h1>
               <span className="badge-kyc">VERIFICADO</span>
             </div>
-            <p>Cuenta de Custodia de Activos Reales en Operación • Premium Trader</p>
+            <p>{usuario.descripcion} • @{usuario.username}</p>
           </div>
         </div>
-        <button className="btn profile-btn-add">+ Nueva Publicación </button>
+        <button className="btn profile-btn-add">+ Publicar nuevo activo</button>
       </header>
 
       {/* Tarjetas de Métricas */}

@@ -20,7 +20,7 @@ public class ControladorUsuario {
                 "alejandro@bidhouse.com",
                 "secreto123",
                 "alemontes",
-                "Cuenta de Custodia de Activos Reales en Operación • Premium Trader"
+                "Vendedor de obras de arte certificadas• Premium Trader"
         );
     }
 }
