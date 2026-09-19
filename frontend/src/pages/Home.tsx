@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./home.css";
+import { Link } from "react-router-dom";
 
 // ---------- Datos de ejemplo (reemplazar por datos reales / API) ----------
 
@@ -62,17 +63,17 @@ const steps = [
   {
     n: "02",
     title: "Deposita en custodia",
-    body: "Tus fondos se bloquean en un contrato de garantía (escrow) antes de pujar. Nadie, ni BidHouse, puede moverlos fuera de las reglas del contrato.",
+    body: "Tus fondos se bloquean en un contrato digital usando Blockchain(escrow). Nadie, ni BidHouse, puede moverlos fuera de las reglas del contrato.",
   },
   {
     n: "03",
     title: "Puja en tiempo real",
-    body: "Cada puja se firma con tu wallet y queda registrada on-chain. El historial del lote es público y no se puede alterar.",
+    body: "Cada puja se firma con tu wallet y queda registrada. El historial del lote es público y no se puede alterar.",
   },
   {
     n: "04",
     title: "Liquidación automática",
-    body: "Al cerrar el lote, el contrato transfiere el activo tokenizado y libera el pago en el mismo bloque. Sin intermediarios, sin esperas bancarias.",
+    body: "Al cerrar el lote, el contrato transfiere el activo tokenizado y libera el pago en el mismo bloque. Sin intermediarios, sin esperas bancarias ni riesgos.",
   },
 ];
 
@@ -193,20 +194,7 @@ export default function Home() {
                 <button className="btn btn--outline">Cómo se verifica un lote</button>
               </div>
 
-              <dl className="hero__stats">
-                <div>
-                  <dt>412M USDC</dt>
-                  <dd>liquidados en cadena</dd>
-                </div>
-                <div>
-                  <dt>1,860</dt>
-                  <dd>activos autenticados</dd>
-                </div>
-                <div>
-                  <dt>0</dt>
-                  <dd>contracargos o disputas de pago</dd>
-                </div>
-              </dl>
+              
             </div>
 
             <div className="hero__ticket">
@@ -263,9 +251,13 @@ export default function Home() {
           <div className="bh-container">
             <div className="live__head">
               <h2>Subastas en vivo</h2>
+              <Link to="/Catalogo">
               <a href="#" className="live__all">
                 Ver todo el catálogo
               </a>
+              </Link>
+              
+
             </div>
             <div className="live__grid">
               {liveLots.map((lot) => (

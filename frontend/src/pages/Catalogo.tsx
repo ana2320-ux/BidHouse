@@ -27,7 +27,7 @@ const MOCK_ITEMS = [
   }
 ];
 
-const FILTERS = ["Todos", "Vehículos", "Relojes", "Inmuebles", "Arte", "Electrónica"];
+const FILTERS = ["Todos", "Vehículos", "Relojes", "Inmuebles", "Arte", "Electrónicos", "Coleccionables", "Otros"];
 
 export default function Catalogo() {
   return (

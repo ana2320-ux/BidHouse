@@ -50,7 +50,7 @@ export default function Perfil() {
       <section className="profile-dashboard">
         {/* Columna Izquierda */}
         <div className="dashboard-col">
-          <h2>Mis Activos en Custodia (RWA)</h2>
+          <h2>Mis Activos en Custodia</h2>
           <div className="asset-list">
             <article className="asset-item">
               <div className="asset-item__image">
