@@ -3,6 +3,8 @@ import Home from './pages/Home';
 import { Routes, Route } from 'react-router-dom';
 import Perfil from './pages/Perfil.tsx'; 
 import Catalogo from './pages/Catalogo';
+import ComoFunciona from './pages/ComoFunciona.tsx';
+
 
 function App() {
   return (
@@ -16,6 +18,7 @@ function App() {
         <Route path="/catalogo" element={<Catalogo />} />
         {/* Aquí agregaremos más rutas en el futuro. Ejemplo: */}
         {/* <Route path="/subastas" element={<Auctions />} /> */}
+        <Route path="/como-funciona" element={<ComoFunciona />} />
       </Routes>
     </div>
   );

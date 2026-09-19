@@ -1,0 +1,159 @@
+.how-page {
+  padding-top: 64px;
+  padding-bottom: 96px;
+  background-color: #f8f9fa; /* Fondo gris muy claro como en la imagen */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Encabezado */
+.how-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.security-badge {
+  display: inline-block;
+  border: 1px solid var(--blue-dark);
+  color: var(--blue-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 999px;
+  margin-bottom: 24px;
+  letter-spacing: 0.05em;
+}
+
+.how-header h1 {
+  font-size: 2.5rem;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+/* Tarjeta CTA Central */
+.cta-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 56px 32px;
+  text-align: center;
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 64px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.cta-card h2 {
+  font-size: 1.75rem;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.cta-card p {
+  color: var(--gray-mid);
+  font-size: 1.05rem;
+  max-width: 600px;
+  margin: 0 auto 32px auto;
+}
+
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.btn--primary-dark {
+  background: #1e3a5f; /* Azul oscuro de la imagen */
+  color: var(--white);
+  border-radius: 8px;
+}
+
+.btn--primary-dark:hover {
+  background: #152943;
+}
+
+.btn--outline-dark {
+  background: transparent;
+  color: #1e3a5f;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+}
+
+.btn--outline-dark:hover {
+  background: #f4f5f7;
+}
+
+/* Flujo de Compra y Venta */
+.flow-section {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.flow-title {
+  font-size: 1.4rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.step-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
+}
+
+.step-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  background: #f0f4f8;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.step-title {
+  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.step-desc {
+  font-size: 0.9rem;
+  color: var(--gray-mid);
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .cta-actions {
+    flex-direction: column;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
