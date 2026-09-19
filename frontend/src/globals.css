@@ -1,0 +1,124 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --gold: #f5b41b;
+  --gold-dark: #c98f0d;
+  --blue: #185e94;
+  --blue-dark: #0f3f66;
+  --ink: #142335;
+  --gray-mid: #64707f;
+  --gray-light: #f4f5f7;
+  --border: #e1e5ea;
+  --white: #ffffff;
+
+  --font-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--white);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.bh-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- Botones Globales ---------- */
+.btn {
+  border-radius: 3px;
+  padding: 13px 24px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn--primary {
+  background: var(--gold);
+  color: var(--blue-dark);
+}
+.btn--primary:hover {
+  background: var(--gold-dark);
+}
+
+.btn--outline {
+  background: transparent;
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.btn--outline:hover {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.btn--ghost {
+  background: var(--blue);
+  color: var(--white);
+}
+.btn--ghost:hover {
+  background: var(--blue-dark);
+}
+
+/* ---------- Elementos Compartidos (Logo y Footer) ---------- */
+.bh-logo {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--blue);
+  letter-spacing: -0.01em;
+}
+
+.bh-logo span {
+  color: var(--gold-dark);
+}
+
+.bh-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 0;
+}
+
+.bh-footer__inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.bh-footer p {
+  font-size: 0.82rem;
+  color: var(--gray-mid);
+}
+
+.bh-logo--footer {
+  font-size: 1.1rem;
+}

@@ -1,0 +1,529 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --gold: #f5b41b;
+  --gold-dark: #c98f0d;
+  --blue: #185e94;
+  --blue-dark: #0f3f66;
+  --ink: #142335;
+  --gray-mid: #64707f;
+  --gray-light: #f4f5f7;
+  --border: #e1e5ea;
+  --white: #ffffff;
+
+  --font-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.bh {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--white);
+  line-height: 1.5;
+}
+
+.bh-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  border-radius: 3px;
+  padding: 13px 24px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn--primary {
+  background: var(--gold);
+  color: var(--blue-dark);
+}
+.btn--primary:hover {
+  background: var(--gold-dark);
+}
+
+.btn--outline {
+  background: transparent;
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.btn--outline:hover {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.btn--ghost {
+  background: var(--blue);
+  color: var(--white);
+}
+.btn--ghost:hover {
+  background: var(--blue-dark);
+}
+
+/* ---------- Header ---------- */
+
+
+
+.bh-logo {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--blue);
+  letter-spacing: -0.01em;
+}
+
+.bh-logo span {
+  color: var(--gold-dark);
+}
+
+.bh-nav {
+  display: flex;
+  gap: 32px;
+}
+
+.bh-nav a {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--gray-mid);
+}
+
+.bh-nav a:hover {
+  color: var(--blue);
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  background: var(--gray-light);
+  padding: 72px 0 96px;
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.hero__kicker {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin-bottom: 18px;
+}
+
+.hero h1 {
+  font-size: 2.6rem;
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+  margin-bottom: 22px;
+}
+
+.hero__sub {
+  font-size: 1.05rem;
+  color: var(--gray-mid);
+  max-width: 46ch;
+  margin-bottom: 32px;
+}
+
+.hero__actions {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 48px;
+}
+
+.hero__stats {
+  display: flex;
+  gap: 40px;
+  margin: 0;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+
+.hero__stats dt {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  color: var(--blue);
+}
+
+.hero__stats dd {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--gray-mid);
+}
+
+/* ---------- Ticket de lote (hero) ---------- */
+
+.ticket {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px 24px 20px;
+  position: relative;
+  box-shadow: 0 24px 48px -32px rgba(20, 35, 53, 0.35);
+}
+
+.ticket__perforation {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 0;
+  height: 1px;
+  background-image: radial-gradient(circle, var(--gray-light) 2px, transparent 2.2px);
+  background-size: 12px 1px;
+  background-repeat: repeat-x;
+  transform: translateY(58px);
+}
+
+.ticket__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ticket__lot {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  color: var(--gray-mid);
+}
+
+.ticket__live {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  background: rgba(245, 180, 27, 0.15);
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+.ticket__image {
+  height: 168px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+}
+
+.ticket__title {
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+
+.ticket__category {
+  font-size: 0.85rem;
+  color: var(--gray-mid);
+  margin-bottom: 20px;
+}
+
+.ticket__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.ticket__label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--gray-mid);
+  margin-bottom: 4px;
+}
+
+.ticket__bid {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  color: var(--blue);
+}
+
+.ticket__timer {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 1.05rem;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.ticket__foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: var(--gray-mid);
+}
+
+.ticket__hash {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+/* ---------- Barra de confianza ---------- */
+
+.trust {
+  padding: 64px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.trust__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.trust__item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.icon {
+  width: 26px;
+  height: 26px;
+  color: var(--blue);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.trust__item h3 {
+  font-size: 1.02rem;
+  margin-bottom: 6px;
+}
+
+.trust__item p {
+  font-size: 0.88rem;
+  color: var(--gray-mid);
+}
+
+/* ---------- Cómo funciona ---------- */
+
+.how {
+  padding: 88px 0;
+}
+
+.how h2 {
+  font-size: 1.9rem;
+  margin-bottom: 44px;
+}
+
+.how__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.how__n {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--gold-dark);
+  margin-bottom: 14px;
+}
+
+.how__step h3 {
+  font-size: 1.02rem;
+  margin-bottom: 8px;
+}
+
+.how__step p {
+  font-size: 0.88rem;
+  color: var(--gray-mid);
+}
+
+/* ---------- Subastas en vivo ---------- */
+
+.live {
+  background: var(--gray-light);
+  padding: 88px 0;
+}
+
+.live__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 36px;
+}
+
+.live__head h2 {
+  font-size: 1.9rem;
+}
+
+.live__all {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.live__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.lot-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lot-card__image {
+  height: 150px;
+  background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+}
+
+.lot-card__body {
+  padding: 20px;
+}
+
+.lot-card__category {
+  font-size: 0.72rem;
+  color: var(--gold-dark);
+  font-weight: 600;
+}
+
+.lot-card__title {
+  font-size: 1.02rem;
+  margin: 6px 0 16px;
+}
+
+.lot-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.lot-card__label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--gray-mid);
+  margin-bottom: 2px;
+}
+
+.lot-card__meta strong {
+  color: var(--blue);
+  font-size: 1rem;
+}
+
+.lot-card__time {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+}
+
+/* ---------- CTA vender ---------- */
+
+.cta {
+  padding: 80px 0;
+}
+
+.cta__inner {
+  background: var(--blue);
+  border-radius: 8px;
+  padding: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+
+.cta h2 {
+  color: var(--white);
+  font-size: 1.7rem;
+  margin-bottom: 10px;
+}
+
+.cta p {
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 48ch;
+  font-size: 0.94rem;
+}
+
+/* ---------- Footer ---------- */
+
+.bh-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 0;
+}
+
+.bh-footer__inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.bh-footer p {
+  font-size: 0.82rem;
+  color: var(--gray-mid);
+}
+
+.bh-logo--footer {
+  font-size: 1.1rem;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 960px) {
+  .hero__grid {
+    grid-template-columns: 1fr;
+  }
+  .trust__grid,
+  .how__grid,
+  .live__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bh-nav {
+    display: none;
+  }
+  .cta__inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .hero__stats {
+    flex-wrap: wrap;
+    row-gap: 20px;
+  }
+  .trust__grid,
+  .how__grid,
+  .live__grid {
+    grid-template-columns: 1fr;
+  }
+}

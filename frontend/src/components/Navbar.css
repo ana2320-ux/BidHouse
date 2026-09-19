@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --gold: #f5b41b;
+  --gold-dark: #c98f0d;
+  --blue: #185e94;
+  --blue-dark: #0f3f66;
+  --ink: #142335;
+  --gray-mid: #64707f;
+  --gray-light: #f4f5f7;
+  --border: #e1e5ea;
+  --white: #ffffff;
+
+  --font-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.bh-nav {
+  display: flex;
+  gap: 32px;
+}
+
+.bh-nav a {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--gray-mid);
+}
+
+.bh-nav a:hover {
+  color: var(--blue);
+}
+
+.bh-header {
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+}
+
+.bh-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+}
