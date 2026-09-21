@@ -16,8 +16,7 @@ export default function Navbar() {
             {/* Cambiamos las <a> por <Link> y los 'href' por 'to' */}
             <Link to="/Catalogo">Catalogo</Link>
             <Link to="/como-funciona">Cómo funciona</Link>
-            <Link to="/seguridad">Seguridad</Link>
-            <Link to="/vender">Vender un activo</Link>
+            
           </nav>
           {/* Botones de autenticación */}
           <div className="bh-auth-actions">
