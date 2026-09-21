@@ -1,0 +1,235 @@
+/* ── Página completa ── */
+.registro-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-light);
+  padding: 40px 20px;
+}
+
+/* ── Contenedor principal: 2 columnas ── */
+.registro-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 960px;
+  width: 100%;
+  background: var(--white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Lado izquierdo: Branding ── */
+.registro-branding {
+  background: var(--blue-dark);
+  color: var(--white);
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.registro-logo {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 32px;
+}
+
+.registro-logo span {
+  color: var(--gold);
+}
+
+.registro-branding h1 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+
+.registro-branding p {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+/* Features */
+.registro-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.registro-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.feature-icon {
+  font-size: 1.2rem;
+}
+
+/* ── Lado derecho: Formulario ── */
+.registro-form-wrapper {
+  padding: 48px 40px;
+}
+
+.registro-form-wrapper h2 {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+}
+
+.registro-subtitle {
+  font-size: 0.9rem;
+  color: var(--gray-mid);
+  margin-bottom: 24px;
+}
+
+.registro-link {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.registro-link:hover {
+  text-decoration: underline;
+}
+
+/* Error message */
+.registro-error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+/* ── Formulario ── */
+.registro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.form-group input {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+
+.form-group input::placeholder {
+  color: #a0aab4;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.12);
+}
+
+/* Submit button */
+.registro-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Terms */
+.registro-terms {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+  margin-top: 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.registro-terms a {
+  color: var(--blue);
+  font-weight: 500;
+}
+
+.registro-terms a:hover {
+  text-decoration: underline;
+}
+
+/* ── Tarjeta de éxito (después del registro) ── */
+.registro-success-card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  max-width: 480px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.success-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.registro-success-card h2 {
+  margin-bottom: 12px;
+}
+
+.registro-success-card p {
+  color: var(--gray-mid);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Botón deshabilitado mientras carga */
+.registro-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Responsive: en pantallas pequeñas, una sola columna ── */
+@media (max-width: 768px) {
+  .registro-container {
+    grid-template-columns: 1fr;
+  }
+
+  .registro-branding {
+    padding: 32px 24px;
+  }
+
+  .registro-form-wrapper {
+    padding: 32px 24px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+

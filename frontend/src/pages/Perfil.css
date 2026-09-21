@@ -59,6 +59,7 @@
 }
 
 .profile-btn-add {
+  display: inline-block;
   background: #1e3a5f;
   color: var(--white);
   border-radius: 8px;

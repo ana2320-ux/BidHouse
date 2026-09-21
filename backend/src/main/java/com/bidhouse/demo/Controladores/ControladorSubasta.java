@@ -1,13 +1,21 @@
 package com.bidhouse.demo.Controladores;
 
-import com.bidhouse.demo.Modelos.Subasta;
-import com.bidhouse.demo.Servicios.ServicioSubasta;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bidhouse.demo.Modelos.NuevaSubasta;
+import com.bidhouse.demo.Servicios.ServicioSubasta;
+
 @RestController
-@RequestMapping("/api/subastas")
+@RequestMapping("/api")
 public class ControladorSubasta {
 
     private final ServicioSubasta servicioSubasta;
@@ -16,8 +24,19 @@ public class ControladorSubasta {
         this.servicioSubasta = servicioSubasta;
     }
 
-    @GetMapping("/prueba")
-    public Subasta obtenerSubastaDePrueba() {
-        return servicioSubasta.obtenerSubastaDePrueba();
+    @GetMapping("/subastas")
+    public List<Map<String, Object>> catalogo() {
+        return servicioSubasta.listarCatalogo();
+    }
+
+    @PostMapping("/subastas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, Object> vender(@RequestBody NuevaSubasta nueva) {
+        return servicioSubasta.crear(nueva);
+    }
+
+    @GetMapping("/categorias")
+    public List<Map<String, Object>> categorias() {
+        return servicioSubasta.listarCategorias();
     }
 }

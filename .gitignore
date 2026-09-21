@@ -1,0 +1,87 @@
+# ─────────────────────────────────────────────────────────────
+# BidHouse — .gitignore raíz
+# Aplica a todo el repo. backend/.gitignore y frontend/.gitignore
+# siguen vigentes y se suman a este.
+# ─────────────────────────────────────────────────────────────
+
+# ── Secretos y entorno ──
+# Nunca se suben. Cada quien crea los suyos en local.
+.env
+.env.*
+*.local
+# Los archivos de ejemplo SÍ se versionan (van sin valores reales)
+!.env.example
+!.env.*.example
+
+# ── Configuración personal de editores e IDE ──
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+!.vscode/extensions.json
+.fleet/
+.eclipse/
+.classpath
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+.nvim.lua
+*.swp
+*.swo
+
+# ── Asistentes de IA ──
+# Configuración y transcripciones locales; nada de esto es del proyecto.
+.claude/
+.cursor/
+.aider*
+.continue/
+.codeium/
+
+# ── Java / Maven (backend) ──
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+!**/.mvn/wrapper/maven-wrapper.jar.sha*
+HELP.md
+hs_err_pid*
+replay_pid*
+
+# ── Node / Vite (frontend) ──
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+# Los lockfiles SÍ se versionan (bun.lock) — no los ignores.
+
+# ── Logs ──
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+
+# ── Sistema operativo ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+*~
+
+# ── Temporales ──
+*.tmp
+*.bak
+*.orig
+*.rej
