@@ -1,0 +1,156 @@
+.sell-page {
+  padding-top: 48px;
+  padding-bottom: 80px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.sell-header {
+  margin-bottom: 32px;
+}
+
+.sell-header h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.sell-header p {
+  color: var(--gray-mid);
+  font-size: 1.05rem;
+}
+
+.sell-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.sell-form {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.sell-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sell-field--full {
+  grid-column: 1 / -1;
+}
+
+.sell-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-mid);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sell-field input,
+.sell-field select,
+.sell-field textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.sell-field input:focus,
+.sell-field select:focus,
+.sell-field textarea:focus {
+  border-color: var(--blue);
+}
+
+.sell-field textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.sell-error {
+  grid-column: 1 / -1;
+  color: #b3261e;
+  background: #fdf1f0;
+  border: 1px solid #f3c9c6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+}
+
+.sell-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.sell-cancel {
+  color: var(--gray-mid);
+  font-size: 0.94rem;
+  font-weight: 500;
+}
+
+.sell-cancel:hover {
+  color: var(--blue);
+}
+
+.sell-btn {
+  background: #1e3a5f;
+  color: var(--white);
+  border-radius: 8px;
+  padding: 12px 24px;
+}
+
+.sell-btn:hover:not(:disabled) {
+  background: #152943;
+}
+
+.sell-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sell-preview {
+  position: sticky;
+  top: 100px;
+}
+
+.sell-preview h2 {
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--gray-mid);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 960px) {
+  .sell-layout {
+    grid-template-columns: 1fr;
+  }
+  .sell-form {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+  .sell-preview {
+    position: static;
+  }
+}

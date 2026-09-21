@@ -1,30 +1,63 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { api, usd } from '../api';
 import './Perfil.css';
 
-// Definimos qué forma tiene la respuesta que esperamos de Java
-interface UsuarioData {
+// Forma de la respuesta de GET /api/usuarios/perfil
+interface PerfilData {
   nombre: string;
   apellido: string;
   descripcion: string;
   username: string;
+  verificado: boolean;
+  stats: {
+    activosEnVivo: number;
+    activosEnEspera: number;
+    ofertasActivas: number;
+    sumaOfertas: number;
+    transaccionesCompletadas: number;
+    volumenTotal: number;
+  };
+  activos: {
+    id: string;
+    nombre: string;
+    precio_estimado: number | null;
+    imagenes: string[] | null;
+    esta_verificado: boolean;
+    categorias: { nombre: string } | null;
+    subastas: { estado: string }[];
+  }[];
+  actividad: {
+    id: string;
+    tipo: string;
+    titulo: string;
+    mensaje: string;
+    creado_en: string;
+  }[];
 }
+
+const AVATAR = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150';
 
 export default function Perfil() {
   // Estado para guardar los datos. Inicia en null mientras carga.
-  const [usuario, setUsuario] = useState<UsuarioData | null>(null);
+  const [perfil, setPerfil] = useState<PerfilData | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Hacemos la petición HTTP GET a Spring Boot
-    fetch('http://localhost:8080/api/usuarios/perfil')
-      .then(respuesta => respuesta.json())
-      .then(datos => setUsuario(datos))
-      .catch(error => console.error("Error conectando al backend:", error));
+    api<PerfilData>('/api/usuarios/perfil').then(setPerfil).catch(() => setError(true));
   }, []);
 
+  if (error) {
+    return <main className="bh-container profile-page"><h2>No se pudo cargar el perfil. Verifica que el backend esté corriendo.</h2></main>;
+  }
+
   // Si aún no ha llegado la respuesta de Java, mostramos un mensaje de carga
-  if (!usuario) {
+  if (!perfil) {
     return <main className="bh-container profile-page"><h2>Cargando perfil seguro...</h2></main>;
   }
+
+  const { stats } = perfil;
+  const enSubasta = stats.activosEnVivo + stats.activosEnEspera;
 
   return (
     <main className="bh-container profile-page">
@@ -32,43 +65,42 @@ export default function Perfil() {
       <header className="profile-header">
         <div className="profile-user">
           {/* Imagen de perfil, random por ahora*/}
-          <img 
-            src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" 
-            alt="Avatar" 
+          <img
+            src={AVATAR}
+            alt="Avatar"
             className="profile-avatar"
           />
           <div className="profile-info">
             <div className="profile-name-row">
-              {/* Aquí inyectamos las variables dinámicas que llegaron del backend :p*/}
-              <h1>Hola, {usuario.nombre} {usuario.apellido}</h1>
-              <span className="badge-kyc">VERIFICADO</span>
+              <h1>Hola, {perfil.nombre} {perfil.apellido}</h1>
+              {perfil.verificado && <span className="badge-kyc">VERIFICADO</span>}
             </div>
-            <p>{usuario.descripcion} • @{usuario.username}</p>
+            <p>{perfil.descripcion} • @{perfil.username}</p>
           </div>
         </div>
-        <button className="btn profile-btn-add">+ Publicar nuevo activo</button>
+        <Link to="/vender" className="btn profile-btn-add">+ Publicar nuevo activo</Link>
       </header>
 
       {/* Tarjetas de Métricas */}
       <section className="profile-stats-grid">
         <article className="stat-card">
           <span className="stat-label">ACTIVOS EN SUBASTA</span>
-          <h3 className="stat-value">3 Activos</h3>
-          <p className="stat-desc">2 Activos en vivo, 1 en espera</p>
+          <h3 className="stat-value">{enSubasta} {enSubasta === 1 ? 'Activo' : 'Activos'}</h3>
+          <p className="stat-desc">{stats.activosEnVivo} Activos en vivo, {stats.activosEnEspera} en espera</p>
         </article>
         <article className="stat-card">
           <span className="stat-label">OFERTAS ACTIVAS</span>
-          <h3 className="stat-value">5 Ofertas</h3>
-          <p className="stat-desc">Suma total de $84,300 USD</p>
+          <h3 className="stat-value">{stats.ofertasActivas} {stats.ofertasActivas === 1 ? 'Oferta' : 'Ofertas'}</h3>
+          <p className="stat-desc">Suma total de {usd(stats.sumaOfertas)}</p>
         </article>
         <article className="stat-card">
           <span className="stat-label">TRANSACCIONES COMPLETADAS</span>
-          <h3 className="stat-value">14 Éxitos</h3>
-          <p className="stat-desc">0 disputas registradas</p>
+          <h3 className="stat-value">{stats.transaccionesCompletadas} {stats.transaccionesCompletadas === 1 ? 'Éxito' : 'Éxitos'}</h3>
+          <p className="stat-desc">Como comprador o vendedor</p>
         </article>
         <article className="stat-card">
           <span className="stat-label">VOLUMEN TOTAL COMERCIALIZADO</span>
-          <h3 className="stat-value">$412,500 USD</h3>
+          <h3 className="stat-value">{usd(stats.volumenTotal)}</h3>
           <p className="stat-desc">Asegurado con smart contracts</p>
         </article>
       </section>
@@ -79,27 +111,29 @@ export default function Perfil() {
         <div className="dashboard-col">
           <h2>Mis Activos en Custodia</h2>
           <div className="asset-list">
-            <article className="asset-item">
-              <div className="asset-item__image">
-                <img src="https://images.unsplash.com/photo-1592198084033-aade902d1aae?auto=format&fit=crop&q=80&w=150" alt="Ferrari" />
-              </div>
-              <div className="asset-item__info">
-                <h4>Ferrari 488 GTB 2020</h4>
-                <p>Vehículos • <strong>$450,000 USD</strong></p>
-              </div>
-              <span className="badge-status available">• Disponible</span>
-            </article>
-
-            <article className="asset-item">
-              <div className="asset-item__image">
-                <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=150" alt="Rolex" />
-              </div>
-              <div className="asset-item__info">
-                <h4>Rolex Daytona Cosmograph</h4>
-                <p>Relojes • <strong>$28,500 USD</strong></p>
-              </div>
-              <span className="badge-status waiting">• En subasta</span>
-            </article>
+            {perfil.activos.length === 0 && <p className="stat-desc">Aún no has publicado activos.</p>}
+            {perfil.activos.map((activo) => {
+              const enVivo = activo.subastas.some((s) => s.estado === 'activa');
+              return (
+                <article key={activo.id} className="asset-item">
+                  <div className="asset-item__image">
+                    {activo.imagenes?.[0] && <img src={activo.imagenes[0]} alt={activo.nombre} />}
+                  </div>
+                  <div className="asset-item__info">
+                    <h4>{activo.nombre}</h4>
+                    <p>
+                      {activo.categorias?.nombre ?? 'Sin categoría'}
+                      {activo.precio_estimado != null && <> • <strong>{usd(activo.precio_estimado)}</strong></>}
+                    </p>
+                  </div>
+                  {enVivo ? (
+                    <span className="badge-status waiting">• En subasta</span>
+                  ) : (
+                    <span className="badge-status available">• {activo.esta_verificado ? 'Disponible' : 'En verificación'}</span>
+                  )}
+                </article>
+              );
+            })}
           </div>
         </div>
 
@@ -107,29 +141,16 @@ export default function Perfil() {
         <div className="dashboard-col">
           <h2>Actividad Reciente y Seguridad Escrow</h2>
           <div className="activity-list">
-            <article className="activity-item">
-              <div className="activity-item__info">
-                <h4>Nueva oferta recibida por Rolex Daytona Cosmograph</h4>
-                <p>Hace 5 minutos • Oferente: 0x982A...dE89</p>
-              </div>
-              <span className="badge-action positive">+$100 USD</span>
-            </article>
-
-            <article className="activity-item">
-              <div className="activity-item__info">
-                <h4>Fondo en Custodia (Escrow Lock) activado para Ferrari</h4>
-                <p>Hace 2 horas • Red Arbitrum • Smart Contract Seguro</p>
-              </div>
-              <span className="badge-action neutral">Bloqueado</span>
-            </article>
-
-            <article className="activity-item">
-              <div className="activity-item__info">
-                <h4>Inspección Física Agendada para MacBook Pro</h4>
-                <p>Hace 5 horas • Hub de inspección Bogotá</p>
-              </div>
-              <span className="badge-action neutral">En proceso</span>
-            </article>
+            {perfil.actividad.length === 0 && <p className="stat-desc">Sin actividad reciente.</p>}
+            {perfil.actividad.map((n) => (
+              <article key={n.id} className="activity-item">
+                <div className="activity-item__info">
+                  <h4>{n.titulo}</h4>
+                  <p>{new Date(n.creado_en).toLocaleString('es-CO')} • {n.mensaje}</p>
+                </div>
+                <span className="badge-action neutral">{n.tipo}</span>
+              </article>
+            ))}
           </div>
         </div>
       </section>

@@ -80,7 +80,7 @@ const steps = [
 // ---------- Utilidades ----------
 
 function useCountdown(target: number) {
-  const [remaining, setRemaining] = useState(target - Date.now());
+  const [remaining, setRemaining] = useState(() => target - Date.now());
 
   useEffect(() => {
     const id = setInterval(() => setRemaining(target - Date.now()), 1000);
@@ -140,8 +140,33 @@ function IconBolt() {
 // ---------- Subcomponentes ----------
 
 function LotTicket({ lot }: { lot: Lot }) {
- 
-  
+  const { h, m, s } = useCountdown(lot.endsAt);
+  return (
+    <div className="ticket">
+      <div className="ticket__perforation" />
+      <div className="ticket__head">
+        <span className="ticket__lot">Lote #{lot.id}</span>
+        <span className="ticket__live">● EN VIVO</span>
+      </div>
+      <div className="ticket__image" />
+      <h3 className="ticket__title">{lot.title}</h3>
+      <p className="ticket__category">{lot.category}</p>
+      <div className="ticket__row">
+        <div>
+          <span className="ticket__label">Puja actual</span>
+          <strong className="ticket__bid">{lot.currentBid}</strong>
+        </div>
+        <div>
+          <span className="ticket__label">Cierra en</span>
+          <span className="ticket__timer">{pad(h)}:{pad(m)}:{pad(s)}</span>
+        </div>
+      </div>
+      <div className="ticket__foot">
+        <span>{lot.bids} pujas</span>
+        <span className="ticket__hash">{lot.hash}</span>
+      </div>
+    </div>
+  );
 }
 
 function LotCard({ lot }: { lot: Lot }) {
