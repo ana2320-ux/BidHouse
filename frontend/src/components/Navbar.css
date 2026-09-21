@@ -45,3 +45,15 @@
   justify-content: space-between;
   height: 76px;
 }
+
+/* Botones de auth en el navbar */
+.bh-auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn--sm {
+  padding: 8px 18px;
+  font-size: 0.85rem;
+}
