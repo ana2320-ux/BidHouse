@@ -7,7 +7,7 @@ import ComoFunciona from './pages/ComoFunciona.tsx';
 import Registro from './pages/Registro';
 import Vender from './pages/Vender.tsx';
 import DetalleActivo from './pages/DetalleActivo';
-
+import Login from './pages/Login.tsx';
 
 function App() {
   return (
@@ -25,6 +25,7 @@ function App() {
         <Route path="/como-funciona" element={<ComoFunciona />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/vender" element={<Vender />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </div>
   );
