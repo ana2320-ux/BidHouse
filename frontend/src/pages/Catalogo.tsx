@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import './Catalogo.css';
 
@@ -82,7 +83,8 @@ export default function Catalogo() {
           const disponible = item.activos?.esta_verificado ?? false;
           const imagen = item.activos?.imagenes?.[0];
           return (
-            <article key={item.id} className="catalog-card">
+            <Link key={item.id} to={`/activo/${item.id}`} className="catalog-card-link">
+              <article className="catalog-card">
               <div className="catalog-card__image-wrapper">
                 {imagen && <img src={imagen} alt={item.titulo} />}
               </div>
@@ -102,7 +104,8 @@ export default function Catalogo() {
                   {hashCorto(item.id)}
                 </div>
               </div>
-            </article>
+              </article>
+            </Link>
           );
         })}
       </div>

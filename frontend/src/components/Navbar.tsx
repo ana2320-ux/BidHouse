@@ -14,7 +14,7 @@ export default function Navbar() {
           <nav className="bh-nav">
             
             {/* Cambiamos las <a> por <Link> y los 'href' por 'to' */}
-            <Link to="/Catalogo">Catalogo</Link>
+            <Link to="/catalogo">Catalogo</Link>
             <Link to="/como-funciona">Cómo funciona</Link>
             <Link to="/vender">Vender un activo</Link>
           </nav>

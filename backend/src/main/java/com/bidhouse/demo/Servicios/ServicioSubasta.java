@@ -6,8 +6,11 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.bidhouse.demo.Modelos.NuevaSubasta;
 
@@ -30,6 +33,26 @@ public class ServicioSubasta {
 
     public List<Map<String, Object>> listarCategorias() {
         return db.consultar("/categorias?activo=eq.true&select=id,nombre&order=nombre");
+    }
+
+    public Map<String, Object> obtenerDetalle(String id) {
+        final String idNormalizado;
+        try {
+            idNormalizado = UUID.fromString(id).toString();
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subasta no encontrada: " + id);
+        }
+
+        String consulta = "/subastas?select=id,titulo,descripcion,precio_base,oferta_actual_mas_alta,"
+                + "incremento_minimo,fecha_inicio,fecha_fin,estado,esta_activa,"
+                + "activos(id,nombre,descripcion,condicion,precio_estimado,imagenes,esta_verificado,"
+                + "categorias(id,nombre))&id=eq." + idNormalizado + "&limit=1";
+
+        List<Map<String, Object>> filas = db.consultar(consulta);
+        if (filas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subasta no encontrada: " + id);
+        }
+        return filas.get(0);
     }
 
     // ponytail: dos inserts sin transacción (PostgREST); si falla el 2º se borra el activo a mano. Usar una función RPC en Postgres si hace falta atomicidad real.

@@ -6,6 +6,7 @@ import Catalogo from './pages/Catalogo';
 import ComoFunciona from './pages/ComoFunciona.tsx';
 import Registro from './pages/Registro';
 import Vender from './pages/Vender.tsx';
+import DetalleActivo from './pages/DetalleActivo';
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/activo/:id" element={<DetalleActivo />} />
         {/* Aquí agregaremos más rutas en el futuro. Ejemplo: */}
         {/* <Route path="/subastas" element={<Auctions />} /> */}
         <Route path="/como-funciona" element={<ComoFunciona />} />
