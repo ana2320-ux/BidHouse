@@ -57,6 +57,50 @@
   }
 }
 
+/* ── Checklist de requisitos de la contraseña ──
+   Gris mientras no se cumple; verde cuando sí. */
+.registro-requisitos {
+  list-style: none;
+  margin: -4px 0 0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--gray-light);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: var(--gray-mid);
+}
+
+.registro-requisitos li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s ease;
+}
+
+.registro-requisito__icono {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.registro-requisitos li.registro-requisito--ok {
+  color: #15803d;
+}
+
+.registro-requisito--ok .registro-requisito__icono {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 700;
+}
+
 /* ── Checkbox "quiero vender" ── */
 .registro-check {
   display: flex;
