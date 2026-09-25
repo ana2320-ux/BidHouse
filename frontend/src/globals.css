@@ -122,3 +122,131 @@ a {
 .bh-logo--footer {
   font-size: 1.1rem;
 }
+/* ---------- Pantallas de acceso (Login y Registro) ----------
+   Estilo "identifier-first" tipo Amazon: la pantalla es solo para entrar o
+   crear cuenta, sin navbar, con una tarjeta angosta centrada. Se comparten
+   aquí porque Login y Registro deben verse como el mismo flujo. */
+.bh-acceso {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 16px 24px;
+  background: var(--gray-light);
+}
+
+.bh-acceso__logo {
+  margin-bottom: 24px;
+}
+
+.bh-acceso__card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.bh-acceso__card--ancha {
+  max-width: 620px;
+}
+
+.bh-acceso__card h1 {
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+}
+
+.bh-acceso__subtitulo {
+  font-size: 0.9rem;
+  color: var(--gray-mid);
+  margin-bottom: 24px;
+}
+
+.bh-acceso__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bh-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bh-campo label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bh-campo__opcional {
+  font-weight: 400;
+  color: var(--gray-mid);
+}
+
+.bh-campo input {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bh-campo input::placeholder {
+  color: #a0aab4;
+}
+
+.bh-campo input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.12);
+}
+
+/* Mismo radio que el botón "Iniciar sesión" del navbar. */
+.bh-acceso__boton {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.bh-acceso__error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.bh-acceso__link {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.bh-acceso__link:hover {
+  text-decoration: underline;
+}
+
+.bh-acceso__legal {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+  margin-top: 20px;
+  line-height: 1.5;
+}
+
+.bh-acceso__legal a {
+  color: var(--blue);
+}
+
+.bh-acceso__pie {
+  margin-top: auto;
+  padding-top: 40px;
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+}
