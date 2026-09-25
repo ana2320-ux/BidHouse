@@ -40,7 +40,7 @@ export default function Login() {
               type="email"
               id="email"
               name="email"
-              placeholder="Ej: alejandro@email.com"
+              placeholder="Ej: alejandro@gmail.com"
               autoComplete="email"
               maxLength={255}
               value={email}
