@@ -1,17 +1,27 @@
 # BidHouse
 Plataforma digital orientada a la subasta en linea de activos de alto valor con transacciones seguras y protegidas.
 
-
-Front 
+# EJECUCION DEL PROGRAMA
+## Front 
 dentro de carpeta de frontend/src
 bun run dev
 
-Back
+## Back
 dentro de carpeta backend/src
 
-WINDOWS
+### WINDOWS
 .\mvnw spring-boot:run  
   
-LINUX
+### LINUX
 ./mvnw spring-boot:run
 chmod +x mvnw     
+
+# PROBAR LA QUE HAY INFORMACION AL INICIAR SESION
+
+1. presionar F12 o inspeccionar en el navegador
+
+2. arriva en la barrita, se le da click al boton que parece ">>"
+
+3. se elige la opcion de "Application"
+
+4. en la parte de "LocalStorage", se puede ver lo que se envia al backend

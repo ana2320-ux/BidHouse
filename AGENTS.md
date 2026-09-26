@@ -15,7 +15,7 @@ liquidación vía contratos inteligentes.
 Proyecto académico (Innovación, semestre 2026-03). Está en fase temprana: la
 base de datos vive en Supabase (Postgres), parte de la interfaz ya consume
 datos reales y otra parte sigue maquetada con datos quemados. Ya hay registro
-de cuentas, pero todavía no hay login.
+y login, pero el resto del backend todavía no usa el token de sesión.
 
 ## Estructura
 
@@ -88,7 +88,7 @@ son strings y no van a fallar al compilar.
 
 - **Backend como proxy de Supabase.** `Servicios/SupabaseClient` tiene tres
   `RestClient`: `/rest/v1` (tablas, con `SUPABASE_SECRET_KEY`, se salta RLS),
-  `/auth/v1` (registro, con la llave pública, igual que haría el navegador) y
+  `/auth/v1` (registro y login, con la llave pública, igual que haría el navegador) y
   `/auth/v1/admin` (borrar cuentas, con la *service_role*). Los servicios arman la
   consulta como string de PostgREST, incluidas relaciones embebidas
   (`activos(nombre,categorias(nombre))`), y devuelven `Map<String, Object>` tal
@@ -115,7 +115,7 @@ Distingue lo que ya funciona de lo que es fachada:
 
 | Zona | Estado |
 | --- | --- |
-| `Login.tsx` | Solo maqueta. Pide el correo (estilo Amazon) y siempre manda a `/registro` como cliente nuevo; no hay paso de contraseña. |
+| `Login.tsx` | **Real**, en dos pasos: `POST /api/usuarios/existe` (si el correo no tiene fila en `usuarios`, manda a `/registro`) y `POST /api/usuarios/login`. Guarda la sesión (tokens + usuario) en `localStorage['bh_sesion']`, pero nada la lee todavía. |
 | `Registro.tsx` | **Real** (`POST /api/usuarios/registro`). El proyecto tiene la confirmación de correo desactivada: la cuenta queda activa al crearse. Hay 2 cuentas viejas creadas desde el navegador que no tienen fila en `usuarios`. |
 | `Perfil.tsx` | **Real**, pero siempre del usuario fijo por config. Métricas calculadas en `ServicioUsuario.perfil()`. |
 | `Catalogo.tsx` | **Real** (`GET /api/subastas`, `/api/categorias`). Los filtros por categoría funcionan; el buscador no está conectado. |
@@ -131,9 +131,9 @@ El equipo eligió que **todo pase por Spring Boot**: el front nunca habla direct
 con Supabase y el backend es el único que tiene las llaves. El registro ya
 sigue este modelo.
 
-Lo que falta para cumplirlo del todo: el login (el backend llama a
-`/auth/v1/token` y le devuelve el JWT al front) y que el backend valide ese JWT
-contra `SUPABASE_JWKS_URL` para reemplazar el usuario fijo por config.
+Registro y login ya lo siguen. Lo que falta para cumplirlo del todo: que el
+front mande el token en cada pedido y que el backend lo valide contra
+`SUPABASE_JWKS_URL` para reemplazar el usuario fijo por config.
 
 ---
 
@@ -188,9 +188,11 @@ contra `SUPABASE_JWKS_URL` para reemplazar el usuario fijo por config.
 
 Si vas a trabajar en algo, probablemente esté acá:
 
-1. Login real por el backend (`/auth/v1/token?grant_type=password`): consultar
-   si el correo existe y pedir la contraseña.
-2. Validar el JWT en el backend y reemplazar el usuario fijo por config.
+1. Usar la sesión: `api.ts` manda `Authorization: Bearer <accessToken>`, el
+   backend valida el JWT y reemplaza el usuario fijo por config; navbar con el
+   nombre y "Cerrar sesión"; renovar el token con el `refreshToken` (dura 1 h).
+2. Borrar las 2 cuentas viejas de Auth sin fila en `usuarios`: `/existe` dice
+   que no existen y el registro les responde 409.
 3. Conectar el buscador del catálogo y el home a datos reales.
 4. Crear subasta de forma atómica (función RPC en Postgres) en vez de dos
    inserts con borrado manual.

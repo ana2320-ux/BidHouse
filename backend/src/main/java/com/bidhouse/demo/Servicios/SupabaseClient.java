@@ -118,8 +118,19 @@ public class SupabaseClient {
 
     ///METODO NUEVO
     //Explicame esto
-    public String iniciarSesion(String email, String password){
-        
+    // POST /auth/v1/token?grant_type=password. En Supabase, "iniciar sesión" es
+    // cambiar correo + contraseña por un token (JWT) que demuestra quién eres.
+    public Map<String, Object> iniciarSesion(String email, String password) {
+        try {
+            return auth.post() //utiliza una llave publica para que no todos puedan iniciar sesion, solo los que tengan la llave publica
+                    .uri("/token?grant_type=password") //se genera un token (JWT) para que con ese token sepamos quien es el usuario
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("email", email, "password", password)) //se mete en el mapa el email y la contraseña que le paso el usuario para que la API de supabase me devuelva un token (JWT)
+                    .retrieve()
+                    .body(OBJETO); //llega un objeto y no un JSON, por eso se usa OBJETO, que es un mapa de String a Object, osea un objeto JSON
+        } catch (RestClientResponseException e) { // en caso de que no se encuentre el usuario o la contraseña sea incorrecta, se lanza una excepcion y se traduce a un error de HTTP 401 Unauthorized
+            throw traducirErrorDeAuth(e);
+        }
     }
 
     // Supabase responde errores como { "code": 422, "error_code": "user_already_exists", "msg": "..." }.
@@ -145,10 +156,14 @@ public class SupabaseClient {
                     new ResponseStatusException(HttpStatus.FORBIDDEN, "El registro de cuentas está deshabilitado.");
             case "over_request_rate_limit", "over_email_send_rate_limit" ->
                     new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Demasiados intentos. Espera unos minutos.");
+            // Ojo: se compara "error_code" (invalid_credentials), no "msg" (Invalid login credentials).
+            // El msg es texto para humanos y Supabase lo puede cambiar; el código es estable.
+            case "invalid_credentials" ->
+                    new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos.");
             // Cualquier otra cosa es un fallo de Supabase, no del usuario: 502 Bad Gateway
             // significa "el servidor del que dependo me respondió mal".
             default -> new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "No se pudo crear la cuenta (Supabase respondió " + e.getStatusCode().value() + ").", e);
+                    "Error al comunicarse con Supabase (respondió " + e.getStatusCode().value() + ").", e);
         };
     }
 }
