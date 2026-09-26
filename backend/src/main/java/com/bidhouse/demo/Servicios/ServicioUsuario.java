@@ -8,7 +8,10 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.bidhouse.demo.Modelos.NuevoUsuario;
 
 @Service
 public class ServicioUsuario {
@@ -72,6 +75,55 @@ public class ServicioUsuario {
         perfil.put("activos", activos);
         perfil.put("actividad", actividad);
         return perfil;
+    }
+
+    // ── Registro ──
+    // Son DOS escrituras contra DOS APIs distintas de Supabase, y entre ellas no
+    // hay transacción (no se puede hacer "rollback" de una llamada HTTP):
+    //   1) la cuenta en Auth: email + contraseña (la contraseña nunca toca "usuarios")
+    //   2) la fila en "usuarios" con el MISMO id, para que cuando haya login el
+    //      id que viene en el JWT sirva para encontrar los datos de la persona.
+    // Si el paso 2 falla, se deshace el paso 1 a mano borrando la cuenta
+    // ("compensación"), igual que ServicioSubasta.crear() borra el activo.
+    public Map<String, Object> registrar(NuevoUsuario n) {
+        n.validar();
+        String email = n.email().strip().toLowerCase(); // "Ana@Gmail.com" y "ana@gmail.com" son la misma cuenta
+
+        String id = db.crearCuenta(email, n.password());
+
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("id", id);
+        fila.put("nombre", n.nombre().strip());
+        fila.put("apellido", n.apellido().strip());
+        fila.put("email", email);
+        fila.put("documento_identidad", n.documentoIdentidad().strip());
+        fila.put("telefono", n.telefono().strip());
+        fila.put("direccion", n.direccion().strip());
+        fila.put("ciudad", n.ciudad().strip());
+        fila.put("pais", n.pais().strip());
+        fila.put("es_vendedor", n.esVendedor());
+        // saldo_disponible, esta_verificado, esta_activo y las fechas no se mandan:
+        // los pone la BD con sus valores por defecto. El usuario no los decide.
+
+        try {
+            db.insertar("usuarios", fila);
+        } catch (RuntimeException e) {
+            try {
+                db.eliminarCuenta(id);
+            } catch (RuntimeException alBorrar) {
+                // Si también falla el borrado, no se pierde el error original:
+                // el segundo queda "adjunto" al primero para poder diagnosticarlo.
+                e.addSuppressed(alBorrar);
+            }
+            // 409 Conflict de PostgREST = choca con una restricción UNIQUE (ej. el email).
+            if (e instanceof RestClientResponseException r && r.getStatusCode().value() == 409) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo.", e);
+            }
+            throw e;
+        }
+
+        // Solo se devuelve lo necesario para confirmar; nunca la contraseña.
+        return Map.of("id", id, "email", email);
     }
 
     private static BigDecimal suma(List<Map<String, Object>> filas) {

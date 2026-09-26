@@ -14,8 +14,8 @@ liquidación vía contratos inteligentes.
 
 Proyecto académico (Innovación, semestre 2026-03). Está en fase temprana: la
 base de datos vive en Supabase (Postgres), parte de la interfaz ya consume
-datos reales y otra parte sigue maquetada con datos quemados. Todavía no hay
-login.
+datos reales y otra parte sigue maquetada con datos quemados. Ya hay registro
+de cuentas, pero todavía no hay login.
 
 ## Estructura
 
@@ -86,9 +86,10 @@ La base de datos es un proyecto de Supabase. **El esquema no está en el repo**
 administran desde el panel. Si cambias una columna, las consultas del backend
 son strings y no van a fallar al compilar.
 
-- **Backend como proxy de PostgREST.** `Servicios/SupabaseClient` es un
-  `RestClient` contra `SUPABASE_URL/rest/v1` autenticado con
-  `SUPABASE_SECRET_KEY` (*service_role*, se salta RLS). Los servicios arman la
+- **Backend como proxy de Supabase.** `Servicios/SupabaseClient` tiene tres
+  `RestClient`: `/rest/v1` (tablas, con `SUPABASE_SECRET_KEY`, se salta RLS),
+  `/auth/v1` (registro, con la llave pública, igual que haría el navegador) y
+  `/auth/v1/admin` (borrar cuentas, con la *service_role*). Los servicios arman la
   consulta como string de PostgREST, incluidas relaciones embebidas
   (`activos(nombre,categorias(nombre))`), y devuelven `Map<String, Object>` tal
   cual: no hay DTOs de salida, así que el JSON que ve el front usa los nombres
@@ -100,8 +101,13 @@ son strings y no van a fallar al compilar.
   `NuevaSubasta.validar()`) y `spring.mvc.problemdetails.enabled=true`, así que
   la respuesta es un Problem Detail. El helper `frontend/src/api.ts` lee su
   campo `detail` y lo lanza como `ApiError`.
+- **Cuenta y perfil comparten id.** `ServicioUsuario.registrar()` crea la
+  cuenta en Supabase Auth y después la fila en `usuarios` con el **mismo id**
+  (el `sub` del JWT). No hay trigger en la BD que haga esto: si creas cuentas
+  por otro lado, la fila de `usuarios` no aparece. Si el insert falla, se borra
+  la cuenta (compensación, no hay transacción entre las dos APIs).
 - **Front.** Todas las llamadas al backend pasan por `api()` en `src/api.ts`.
-  Solo `Registro.tsx` usa el cliente de Supabase (`src/lib/supabaseClient.ts`).
+  Ninguna página usa ya `src/lib/supabaseClient.ts`.
 
 ## Estado real del código
 
@@ -110,7 +116,7 @@ Distingue lo que ya funciona de lo que es fachada:
 | Zona | Estado |
 | --- | --- |
 | `Login.tsx` | Solo maqueta. Pide el correo (estilo Amazon) y siempre manda a `/registro` como cliente nuevo; no hay paso de contraseña. |
-| `Registro.tsx` | **Real.** Llama a `supabase.auth.signUp()` directo desde el navegador. Los datos de perfil van a `raw_user_meta_data`, no a la tabla `usuarios`. |
+| `Registro.tsx` | **Real** (`POST /api/usuarios/registro`). El proyecto tiene la confirmación de correo desactivada: la cuenta queda activa al crearse. Hay 2 cuentas viejas creadas desde el navegador que no tienen fila en `usuarios`. |
 | `Perfil.tsx` | **Real**, pero siempre del usuario fijo por config. Métricas calculadas en `ServicioUsuario.perfil()`. |
 | `Catalogo.tsx` | **Real** (`GET /api/subastas`, `/api/categorias`). Los filtros por categoría funcionan; el buscador no está conectado. |
 | `DetalleActivo.tsx` | **Real** (`GET /api/subastas/{id}`). |
@@ -119,26 +125,15 @@ Distingue lo que ya funciona de lo que es fachada:
 | `ComoFunciona.tsx` | Contenido estático, está bien así. |
 | Pujas, cierre de subasta, auth en el backend | No existen. |
 
-## Decisión de arquitectura pendiente
+## Decisión de arquitectura: modelo B
 
-Hoy conviven dos caminos de datos que se contradicen y hay que unificarlos:
+El equipo eligió que **todo pase por Spring Boot**: el front nunca habla directo
+con Supabase y el backend es el único que tiene las llaves. El registro ya
+sigue este modelo.
 
-- El registro habla **directo con Supabase** desde el navegador.
-- Catálogo, detalle, perfil y vender hablan con **Spring Boot**, que consulta
-  Supabase con la *service_role*. `SUPABASE_JWKS_URL` está configurada pero no
-  se usa: el backend no valida ningún JWT.
-
-Que el código se haya inclinado hacia Spring Boot no significa que la decisión
-esté tomada. Antes de agregar una funcionalidad que toque datos de usuario,
-pregunta cuál de los dos modelos se adoptó:
-
-- **A — Supabase como fuente de verdad.** El front lo consulta directo, con RLS
-  bien configurado. Spring Boot solo resuelve lo que Supabase no puede (reglas
-  de puja, cierre de subasta). Mucho menos código.
-- **B — Todo pasa por Spring Boot**, que valida el JWT contra `SUPABASE_JWKS_URL`.
-  El front nunca toca Supabase directo.
-
-No elijas por tu cuenta: es una decisión del equipo.
+Lo que falta para cumplirlo del todo: el login (el backend llama a
+`/auth/v1/token` y le devuelve el JWT al front) y que el backend valide ese JWT
+contra `SUPABASE_JWKS_URL` para reemplazar el usuario fijo por config.
 
 ---
 
@@ -193,9 +188,9 @@ No elijas por tu cuenta: es una decisión del equipo.
 
 Si vas a trabajar en algo, probablemente esté acá:
 
-1. Login real: consultar si el correo existe y pedir la contraseña.
-2. Reemplazar el usuario fijo por el JWT de Supabase, según la decisión de
-   arquitectura de arriba.
+1. Login real por el backend (`/auth/v1/token?grant_type=password`): consultar
+   si el correo existe y pedir la contraseña.
+2. Validar el JWT en el backend y reemplazar el usuario fijo por config.
 3. Conectar el buscador del catálogo y el home a datos reales.
 4. Crear subasta de forma atómica (función RPC en Postgres) en vez de dos
    inserts con borrado manual.
