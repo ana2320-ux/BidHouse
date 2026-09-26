@@ -1,0 +1,26 @@
+/* ── Separador "¿Eres nuevo en BidHouse?" con líneas a los lados ── */
+.login-separador {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 14px;
+  font-size: 0.8rem;
+  color: var(--gray-mid);
+}
+
+.login-separador::before,
+.login-separador::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* El botón de crear cuenta vive fuera de la tarjeta, como en Amazon,
+   así que necesita el mismo ancho máximo que ella. */
+.login-crear {
+  max-width: 400px;
+  background: var(--white);
+}

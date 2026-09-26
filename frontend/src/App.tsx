@@ -1,19 +1,26 @@
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Perfil from './pages/Perfil.tsx';
 import Catalogo from './pages/Catalogo';
 import ComoFunciona from './pages/ComoFunciona.tsx';
 import Registro from './pages/Registro';
+import Login from './pages/Login';
 import Vender from './pages/Vender.tsx';
 import DetalleActivo from './pages/DetalleActivo';
 
 
+// Pantallas de acceso a pantalla completa (estilo Amazon): sin navbar para
+// que el usuario no se distraiga mientras entra o crea su cuenta.
+const RUTAS_SIN_NAVBAR = ['/login', '/registro'];
+
 function App() {
+  const { pathname } = useLocation();
+
   return (
     <div>
       {/* El Navbar va primero para que quede arriba de todo */}
-      <Navbar />
+      {!RUTAS_SIN_NAVBAR.includes(pathname) && <Navbar />}
      {/* Routes actúa como un contenedor donde se intercambiarán las páginas */}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -23,6 +30,7 @@ function App() {
         {/* Aquí agregaremos más rutas en el futuro. Ejemplo: */}
         {/* <Route path="/subastas" element={<Auctions />} /> */}
         <Route path="/como-funciona" element={<ComoFunciona />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/vender" element={<Vender />} />
       </Routes>
