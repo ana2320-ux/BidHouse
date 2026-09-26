@@ -11,7 +11,7 @@ type EstadoDesdeLogin = { email?: string; esNuevo?: boolean } | null;
 // Se definen una sola vez y se usan en dos lugares: la checklist que se ve
 // mientras escribes y la validación de handleSubmit. Así no se desincronizan.
 const REQUISITOS_PASSWORD = [
-  { texto: 'Más de 6 caracteres', cumple: (p: string) => p.length > 6 },
+  { texto: 'Más de 6 caracteres', cumple: (p: string) => p.length >= 6 },
   { texto: 'Al menos una mayúscula', cumple: (p: string) => /[A-ZÁÉÍÓÚÜÑ]/.test(p) },
   { texto: 'Al menos un símbolo ( . $ * # @ ! = + )', cumple: (p: string) => /[.$*#@!=+]/.test(p) },
 ];

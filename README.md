@@ -13,5 +13,5 @@ WINDOWS
 .\mvnw spring-boot:run  
   
 LINUX
-./mvnw spring-boot:run  
+./mvnw spring-boot:run
 chmod +x mvnw     
