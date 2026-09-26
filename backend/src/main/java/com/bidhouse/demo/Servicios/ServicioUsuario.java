@@ -8,7 +8,11 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.bidhouse.demo.Modelos.Credenciales;
+import com.bidhouse.demo.Modelos.NuevoUsuario;
 
 @Service
 public class ServicioUsuario {
@@ -72,6 +76,100 @@ public class ServicioUsuario {
         perfil.put("activos", activos);
         perfil.put("actividad", actividad);
         return perfil;
+    }
+
+    // ── Registro ──
+    // Son DOS escrituras contra DOS APIs distintas de Supabase, y entre ellas no
+    // hay transacción (no se puede hacer "rollback" de una llamada HTTP):
+    //   1) la cuenta en Auth: email + contraseña (la contraseña nunca toca "usuarios")
+    //   2) la fila en "usuarios" con el MISMO id, para que cuando haya login el
+    //      id que viene en el JWT sirva para encontrar los datos de la persona.
+    // Si el paso 2 falla, se deshace el paso 1 a mano borrando la cuenta
+    // ("compensación"), igual que ServicioSubasta.crear() borra el activo.
+    public Map<String, Object> registrar(NuevoUsuario n) {
+        n.validar();
+        String email = n.email().strip().toLowerCase(); // "Ana@Gmail.com" y "ana@gmail.com" son la misma cuenta
+
+        String id = db.crearCuenta(email, n.password());
+
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("id", id);
+        fila.put("nombre", n.nombre().strip());
+        fila.put("apellido", n.apellido().strip());
+        fila.put("email", email);
+        fila.put("documento_identidad", n.documentoIdentidad().strip());
+        fila.put("telefono", n.telefono().strip());
+        fila.put("direccion", n.direccion().strip());
+        fila.put("ciudad", n.ciudad().strip());
+        fila.put("pais", n.pais().strip());
+        fila.put("es_vendedor", n.esVendedor());
+        // saldo_disponible, esta_verificado, esta_activo y las fechas no se mandan:
+        // los pone la BD con sus valores por defecto. El usuario no los decide.
+
+        try {
+            db.insertar("usuarios", fila);
+        } catch (RuntimeException e) {
+            try {
+                db.eliminarCuenta(id);
+            } catch (RuntimeException alBorrar) {
+                // Si también falla el borrado, no se pierde el error original:
+                // el segundo queda "adjunto" al primero para poder diagnosticarlo.
+                e.addSuppressed(alBorrar);
+            }
+            // 409 Conflict de PostgREST = choca con una restricción UNIQUE (ej. el email).
+            if (e instanceof RestClientResponseException r && r.getStatusCode().value() == 409) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo.", e);
+            }
+            throw e;
+        }
+
+        // Solo se devuelve lo necesario para confirmar; nunca la contraseña.
+        return Map.of("id", id, "email", email);
+    }
+
+    // ── Login, paso 1: ¿el correo ya tiene cuenta? ──
+    // Le permite al front decidir si pedir contraseña o mandar a crear cuenta
+    // (flujo estilo Amazon). Costo aceptado: cualquiera puede averiguar si un
+    // correo está registrado en BidHouse.
+    public boolean existe(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico es obligatorio");
+        }
+        // Se normaliza igual que en registrar(): si no, "Ana@Gmail.com" no
+        // encontraría a "ana@gmail.com", que es como quedó guardado.
+        return db.existeUsuario(email.strip().toLowerCase());
+    }
+
+    // ── Login, paso 2: correo + contraseña → sesión ──
+    // Supabase valida la contraseña y entrega los tokens; luego se busca la fila
+    // de "usuarios" con el id de la cuenta (el mismo que se usó al registrar).
+    public Map<String, Object> iniciarSesion(Credenciales c) {
+        c.validar();
+        String email = c.email().strip().toLowerCase();
+
+        Map<String, Object> sesion = db.iniciarSesion(email, c.password());
+        String id = (String) ((Map<?, ?>) sesion.get("user")).get("id");
+
+        // El id viene de Supabase, no del usuario: concatenarlo aquí es seguro. (Como por temas de seguridad o algo asi)
+        // BUENO, si el usuario existe, supa base, retorna un id, si no existe devuelve una excepcion,
+        // si existe, ese id se usa para buscar en la tabla usuarios, si la otra informacion del usuario
+        List<Map<String, Object>> filas = db.consultar("/usuarios?id=eq." + id
+                + "&select=id,nombre,apellido,email,es_vendedor,esta_verificado&limit=1");
+        if (filas.isEmpty()) {
+            // Cuenta en Auth sin fila en "usuarios" (ej. las creadas desde el
+            // navegador antes de que el registro pasara por el backend).
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Tu cuenta no tiene un perfil asociado. Contacta a soporte.");
+        }
+
+        // Se arma la respuesta a mano en vez de reenviar la de Supabase: esa trae
+        // datos internos (metadata, identidades, fechas) que el front no necesita.
+        Map<String, Object> respuesta = new LinkedHashMap<>();
+        respuesta.put("accessToken", sesion.get("access_token"));
+        respuesta.put("refreshToken", sesion.get("refresh_token"));
+        respuesta.put("expiraEn", sesion.get("expires_in")); // segundos (3600 = 1 hora)
+        respuesta.put("usuario", filas.get(0));
+        return respuesta;
     }
 
     private static BigDecimal suma(List<Map<String, Object>> filas) {
