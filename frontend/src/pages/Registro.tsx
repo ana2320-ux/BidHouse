@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { api, ApiError } from '../api';
 import './Registro.css';
 
 // Lo que /login manda en el "state" de la navegación cuando el correo es nuevo.
@@ -57,15 +57,18 @@ export default function Registro() {
 
   // ── Manejar envío del formulario ──
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    // async porque supabase.auth.signUp() es una operación asíncrona
-    // (va a internet, tarda un poco en responder)
+    // async porque la llamada al backend es asíncrona
+    // (va por la red, tarda un poco en responder)
     e.preventDefault();
     setError('');
 
-    // Se separan las contraseñas del resto: "perfil" es lo que va a la BD.
+    // Se separan las contraseñas del resto. confirmPassword solo sirve aquí,
+    // para comparar; al backend no se manda.
     const { password, confirmPassword, ...perfil } = formData;
 
-    // ── Validaciones locales (antes de llamar a Supabase) ──
+    // ── Validaciones locales (antes de llamar al backend) ──
+    // El backend repite estas mismas reglas (NuevoUsuario.validar()); estas
+    // existen solo para avisar rápido sin esperar la respuesta del servidor.
     
     // Validar campos de texto uno por uno
     if (formData.nombre.trim() === '') {
@@ -128,25 +131,40 @@ export default function Registro() {
       return;
     }
 
-    // ── Llamada a Supabase ──
+    // ── Llamada al backend ──
+    // POST /api/usuarios/registro. Spring Boot crea la cuenta en Supabase Auth
+    // y la fila en la tabla "usuarios" (ver ServicioUsuario.registrar()).
+    // Las claves del JSON van en camelCase porque así se llaman los campos
+    // del record NuevoUsuario en Java.
     setLoading(true);
-
-    // "options.data" guarda información extra del usuario en auth.users →
-    // campo raw_user_meta_data. Ojo: eso NO llena la tabla "usuarios"; para
-    // eso hace falta un trigger en la BD o el backend (decisión pendiente,
-    // ver AGENTS.md). Se mandan todos los datos para no perderlos mientras.
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: perfil.email,
-      password,
-      options: { data: perfil },
-    });
-
-    setLoading(false);
-
-    // ── Manejar resultado ──
-    if (signUpError) {
-      setError(signUpError.message);
+    try {
+      await api('/api/usuarios/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: perfil.nombre,
+          apellido: perfil.apellido,
+          documentoIdentidad: perfil.documento_identidad,
+          telefono: perfil.telefono,
+          email: perfil.email,
+          direccion: perfil.direccion,
+          ciudad: perfil.ciudad,
+          pais: perfil.pais,
+          esVendedor: perfil.es_vendedor,
+          password,
+        }),
+      });
+    } catch (err) {
+      // api() lanza un ApiError con el "detail" que mandó el backend
+      // (ej. "Ya existe una cuenta con ese correo."). Si ni siquiera hubo
+      // respuesta (backend apagado), fetch lanza un TypeError genérico.
+      setError(err instanceof ApiError
+        ? err.message
+        : 'No pudimos conectar con el servidor. Intenta de nuevo en un momento.');
       return;
+    } finally {
+      // finally corre siempre, haya error o no: el botón nunca queda bloqueado.
+      setLoading(false);
     }
 
     // ¡Éxito! Mostramos mensaje y redirigimos al login después de 2 segundos
@@ -167,7 +185,7 @@ export default function Registro() {
           <span className="registro-exito__icono">✅</span>
           <h1>¡Cuenta creada!</h1>
           <p>
-            Revisa tu correo electrónico para confirmar tu cuenta.
+            Tu cuenta ya está activa.
             Serás redirigido al inicio de sesión en unos segundos...
           </p>
         </div>
