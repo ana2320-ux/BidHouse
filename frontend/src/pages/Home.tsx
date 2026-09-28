@@ -140,33 +140,8 @@ function IconBolt() {
 // ---------- Subcomponentes ----------
 
 function LotTicket({ lot }: { lot: Lot }) {
-  const { h, m, s } = useCountdown(lot.endsAt);
-  return (
-    <div className="ticket">
-      <div className="ticket__perforation" />
-      <div className="ticket__head">
-        <span className="ticket__lot">Lote #{lot.id}</span>
-        <span className="ticket__live">● EN VIVO</span>
-      </div>
-      <div className="ticket__image" />
-      <h3 className="ticket__title">{lot.title}</h3>
-      <p className="ticket__category">{lot.category}</p>
-      <div className="ticket__row">
-        <div>
-          <span className="ticket__label">Puja actual</span>
-          <strong className="ticket__bid">{lot.currentBid}</strong>
-        </div>
-        <div>
-          <span className="ticket__label">Cierra en</span>
-          <span className="ticket__timer">{pad(h)}:{pad(m)}:{pad(s)}</span>
-        </div>
-      </div>
-      <div className="ticket__foot">
-        <span>{lot.bids} pujas</span>
-        <span className="ticket__hash">{lot.hash}</span>
-      </div>
-    </div>
-  );
+  
+  
 }
 
 function LotCard({ lot }: { lot: Lot }) {
@@ -271,26 +246,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SUBASTAS EN VIVO */}
-        <section className="live" id="subastas">
-          <div className="bh-container">
-            <div className="live__head">
-              <h2>Subastas en vivo</h2>
-              <Link to="/Catalogo">
-              <a href="#" className="live__all">
-                Ver todo el catálogo
-              </a>
-              </Link>
-              
-
-            </div>
-            <div className="live__grid">
-              {liveLots.map((lot) => (
-                <LotCard lot={lot} key={lot.id} />
-              ))}
-            </div>
-          </div>
-        </section>
+        
 
         {/* CTA VENDER */}
         <section className="cta" id="vender">
