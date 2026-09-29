@@ -102,7 +102,7 @@ public class ServicioUsuario {
         fila.put("direccion", n.direccion().strip());
         fila.put("ciudad", n.ciudad().strip());
         fila.put("pais", n.pais().strip());
-        fila.put("es_vendedor", n.esVendedor());
+        fila.put("esta_verificado", true);
         // saldo_disponible, esta_verificado, esta_activo y las fechas no se mandan:
         // los pone la BD con sus valores por defecto. El usuario no los decide.
 
