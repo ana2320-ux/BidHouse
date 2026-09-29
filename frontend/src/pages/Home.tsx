@@ -14,45 +14,8 @@ interface Lot {
   hash: string;
 }
 
-const featuredLot: Lot = {
-  id: "0142",
-  title: "Patek Philippe Nautilus 5711, 1978",
-  category: "Relojería · Pieza única",
-  currentBid: "184,000 USDC",
-  bids: 37,
-  endsAt: Date.now() + 1000 * 60 * 60 * 3 + 1000 * 60 * 24, // ~3h24m
-  hash: "0x8f2c...a91d",
-};
 
-const liveLots: Lot[] = [
-  {
-    id: "0138",
-    title: "Óleo sobre lienzo, Rufino Tamayo",
-    category: "Arte moderno",
-    currentBid: "96,500 USDC",
-    bids: 21,
-    endsAt: Date.now() + 1000 * 60 * 48,
-    hash: "0x3ad1...77b2",
-  },
-  {
-    id: "0139",
-    title: "Ferrari 250 GT Lusso, 1963",
-    category: "Automóviles clásicos",
-    currentBid: "1,240,000 USDC",
-    bids: 12,
-    endsAt: Date.now() + 1000 * 60 * 60 * 6,
-    hash: "0x9e40...1c3f",
-  },
-  {
-    id: "0140",
-    title: "Departamento penthouse, Polanco",
-    category: "Bienes raíces tokenizados",
-    currentBid: "812,000 USDC",
-    bids: 8,
-    endsAt: Date.now() + 1000 * 60 * 60 * 20,
-    hash: "0x1b77...e40a",
-  },
-];
+
 
 const steps = [
   {
@@ -197,9 +160,7 @@ export default function Home() {
               
             </div>
 
-            <div className="hero__ticket">
-              <LotTicket lot={featuredLot} />
-            </div>
+            
           </div>
         </section>
 

@@ -8,6 +8,7 @@ import Registro from './pages/Registro';
 import Login from './pages/Login';
 import Vender from './pages/Vender.tsx';
 import DetalleActivo from './pages/DetalleActivo';
+import VerificacionKYC from './pages/VerificacionKYC';
 
 
 // Pantallas de acceso a pantalla completa (estilo Amazon): sin navbar para
@@ -27,8 +28,7 @@ function App() {
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/activo/:id" element={<DetalleActivo />} />
-        {/* Aquí agregaremos más rutas en el futuro. Ejemplo: */}
-        {/* <Route path="/subastas" element={<Auctions />} /> */}
+        <Route path="/verificacion-kyc" element={<VerificacionKYC />} />
         <Route path="/como-funciona" element={<ComoFunciona />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
