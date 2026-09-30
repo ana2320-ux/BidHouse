@@ -10,33 +10,204 @@ export interface MiContrato {
   monto: number;
   comision_plataforma: number | null;
   fecha_limite_pago: string | null;
+  fecha_limite_envio?: string | null;
+  guia_envio?: string | null;
+  enviado_en?: string | null;
+  fecha_limite_confirmacion?: string | null;
+  liberado_en?: string | null;
+  notas?: string | null;           // motivo de la disputa o de la cancelación
   rol: 'comprador' | 'vendedor';
 }
 
-const fechaCorta = (valor: string | null) =>
+const fechaCorta = (valor?: string | null) =>
   valor ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(valor)) : '';
 
-// Qué ve comprador o vendedor según la etapa del contrato. Pagar solo aparece
-// para el comprador mientras está "pendiente".
+// Qué ve comprador o vendedor en cada etapa del contrato
+// (backend/sql/fase4_pagos.sql y fase4b_entrega.sql):
+//   pendiente → en_custodia → enviado → completada   (o cancelada / en_disputa)
+// Las acciones: el comprador paga, el vendedor marca el envío, el comprador
+// confirma que le llegó (eso libera el pago) o reporta un problema.
 export function PagoContrato({ contrato, alPagar }: { contrato: MiContrato; alPagar: () => void }) {
-  if (contrato.rol === 'comprador' && contrato.estado === 'pendiente') {
-    return <PagarContrato contrato={contrato} alPagar={alPagar} />;
+  const { rol, estado } = contrato;
+  const neto = contrato.monto - (contrato.comision_plataforma ?? 0);
+
+  if (rol === 'comprador') {
+    switch (estado) {
+      case 'pendiente':
+        return <PagarContrato contrato={contrato} alPagar={alPagar} />;
+      case 'en_custodia':
+        return (
+          <div className="pago-contrato">
+            <p className="pago-contrato__texto">
+              ✓ Pagaste. Tu dinero está en custodia. El vendedor tiene hasta el <strong>{fechaCorta(contrato.fecha_limite_envio)}</strong> para
+              enviarlo; si no lo hace, te lo devolvemos a tu saldo.
+            </p>
+            <RecibirActivo contrato={contrato} alCambiar={alPagar} />
+          </div>
+        );
+      case 'enviado':
+        return (
+          <div className="pago-contrato">
+            <p className="pago-contrato__texto">
+              📦 El vendedor lo envió el {fechaCorta(contrato.enviado_en)}: <strong>{contrato.guia_envio}</strong>.
+              ¿Te llegó bien? Si no respondes antes del {fechaCorta(contrato.fecha_limite_confirmacion)}, se dará por recibido.
+            </p>
+            <RecibirActivo contrato={contrato} alCambiar={alPagar} />
+          </div>
+        );
+      case 'completada':
+        return <p className="pago-contrato__estado pago-contrato__estado--ok">✓ Compra completada. El pago se liberó al vendedor el {fechaCorta(contrato.liberado_en)}.</p>;
+      case 'en_disputa':
+        return <p className="pago-contrato__estado pago-contrato__estado--alerta">Reportaste un problema: “{contrato.notas}”. El dinero sigue retenido en custodia mientras BidHouse lo revisa.</p>;
+      case 'cancelada':
+        return <p className="pago-contrato__estado">Contrato cancelado. {contrato.notas}</p>;
+    }
+  } else {
+    switch (estado) {
+      case 'pendiente':
+        return <p className="pago-contrato__estado">Esperando que el comprador pague (plazo: {fechaCorta(contrato.fecha_limite_pago)}).</p>;
+      case 'en_custodia':
+        return <MarcarEnviado contrato={contrato} neto={neto} alCambiar={alPagar} />;
+      case 'enviado':
+        return (
+          <p className="pago-contrato__estado">
+            📦 Enviado ({contrato.guia_envio}). Esperando que el comprador confirme que le llegó. Si no responde antes
+            del {fechaCorta(contrato.fecha_limite_confirmacion)}, recibirás {usd(neto)} automáticamente.
+          </p>
+        );
+      case 'completada':
+        return <p className="pago-contrato__estado pago-contrato__estado--ok">✓ Pago liberado: se sumaron {usd(neto)} a tu saldo ({usd(contrato.comision_plataforma ?? 0)} de comisión).</p>;
+      case 'en_disputa':
+        return <p className="pago-contrato__estado pago-contrato__estado--alerta">El comprador reportó un problema: “{contrato.notas}”. El pago queda retenido mientras BidHouse lo revisa.</p>;
+      case 'cancelada':
+        return <p className="pago-contrato__estado">Contrato cancelado. {contrato.notas}</p>;
+    }
+  }
+  return <p className="pago-contrato__estado">Estado del contrato: {estado}.</p>;
+}
+
+// ── Vendedor: marcar el envío ──
+function MarcarEnviado({ contrato, neto, alCambiar }: { contrato: MiContrato; neto: number; alCambiar: () => void }) {
+  const [guia, setGuia] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
+
+  const marcar = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setEnviando(true);
+    setError('');
+    try {
+      await api(`/api/contratos/${contrato.id}/envio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guia }),
+      });
+      alCambiar();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo marcar el envío.');
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <form className="pago-contrato" onSubmit={marcar} noValidate>
+      <p className="pago-contrato__texto">
+        ✓ El comprador pagó y el dinero está en custodia. <strong>Envía el activo antes del {fechaCorta(contrato.fecha_limite_envio)}</strong>:
+        cuando el comprador confirme que le llegó, recibirás {usd(neto)} en tu saldo.
+      </p>
+      <label className="pago-contrato__label" htmlFor="guia">Transportadora y número de guía (o cómo lo entregaste)</label>
+      <input
+        id="guia"
+        className="pago-contrato__input"
+        placeholder="Ej: Servientrega 2045 3321 0098"
+        maxLength={200}
+        value={guia}
+        onChange={(e) => setGuia(e.target.value)}
+      />
+      {error && <p className="pago-contrato__error">{error}</p>}
+      <button type="submit" className="detail-button detail-button--primary" disabled={enviando}>
+        {enviando ? 'Guardando…' : 'Marcar como enviado'}
+      </button>
+    </form>
+  );
+}
+
+// ── Comprador: confirmar que llegó, o reportar un problema ──
+// Confirmar libera el pago al vendedor y no se puede deshacer: va con doble clic.
+function RecibirActivo({ contrato, alCambiar }: { contrato: MiContrato; alCambiar: () => void }) {
+  const [modo, setModo] = useState<'botones' | 'confirmar' | 'problema'>('botones');
+  const [motivo, setMotivo] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
+
+  const enviar = async (ruta: string, cuerpo?: object) => {
+    setEnviando(true);
+    setError('');
+    try {
+      await api(`/api/contratos/${contrato.id}/${ruta}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+      });
+      alCambiar();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo completar la acción.');
+      setEnviando(false);
+    }
+  };
+
+  if (modo === 'confirmar') {
+    return (
+      <div className="pago-contrato__confirmar">
+        <p>Al confirmar, el pago se libera al vendedor. <strong>No se puede deshacer.</strong> ¿El activo llegó en buen estado?</p>
+        {error && <p className="pago-contrato__error">{error}</p>}
+        <div className="pago-contrato__acciones">
+          <button type="button" className="detail-button detail-button--secondary" onClick={() => setModo('botones')} disabled={enviando}>Cancelar</button>
+          <button type="button" className="detail-button detail-button--primary" onClick={() => enviar('recepcion')} disabled={enviando}>
+            {enviando ? 'Confirmando…' : 'Sí, lo recibí'}
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  const neto = contrato.monto - (contrato.comision_plataforma ?? 0);
-  let texto: string;
-  if (contrato.rol === 'comprador') {
-    texto = contrato.estado === 'en_custodia'
-      ? '✓ Pagaste. Tu dinero está en custodia en BidHouse hasta que confirmes que recibiste el activo.'
-      : `Estado del contrato: ${contrato.estado}.`;
-  } else {
-    texto = contrato.estado === 'pendiente'
-      ? `Esperando que el comprador pague (plazo: ${fechaCorta(contrato.fecha_limite_pago)}).`
-      : contrato.estado === 'en_custodia'
-        ? `✓ El comprador pagó y el dinero está en custodia. Envía el activo: recibirás ${usd(neto)} en tu saldo cuando confirme la entrega.`
-        : `Estado del contrato: ${contrato.estado}.`;
+  if (modo === 'problema') {
+    return (
+      <div className="pago-contrato__confirmar">
+        <label className="pago-contrato__label" htmlFor="motivo">¿Qué pasó?</label>
+        <textarea
+          id="motivo"
+          className="pago-contrato__input"
+          rows={3}
+          maxLength={500}
+          placeholder="Ej: El reloj llegó con el cristal rayado y sin la caja original."
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+        />
+        <p className="pago-contrato__nota">El pago queda retenido y no se libera al vendedor mientras se revisa.</p>
+        {error && <p className="pago-contrato__error">{error}</p>}
+        <div className="pago-contrato__acciones">
+          <button type="button" className="detail-button detail-button--secondary" onClick={() => setModo('botones')} disabled={enviando}>Cancelar</button>
+          <button type="button" className="detail-button detail-button--primary" onClick={() => enviar('problema', { motivo })} disabled={enviando}>
+            {enviando ? 'Enviando…' : 'Reportar problema'}
+          </button>
+        </div>
+      </div>
+    );
   }
-  return <p className="pago-contrato__estado">{texto}</p>;
+
+  return (
+    <div className="pago-contrato__opciones">
+      <button type="button" className="pago-contrato__opcion" onClick={() => setModo('confirmar')}>
+        <strong>Lo recibí bien</strong>
+        <span>Libera el pago al vendedor</span>
+      </button>
+      <button type="button" className="pago-contrato__opcion" onClick={() => setModo('problema')}>
+        <strong>Tengo un problema</strong>
+        <span>El pago queda retenido</span>
+      </button>
+    </div>
+  );
 }
 
 // ── El comprador elige cómo pagar ──

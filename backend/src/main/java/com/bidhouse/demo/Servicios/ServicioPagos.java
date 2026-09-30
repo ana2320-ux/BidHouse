@@ -191,7 +191,7 @@ public class ServicioPagos {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tu cuenta no tiene un perfil asociado. Contacta a soporte.");
         }
         List<Map<String, Object>> enCustodia = db.consultar("/transacciones?vendedor_id=eq." + idUsuario
-                + "&estado=in.(en_custodia,enviado,recibido)&select=monto,comision_plataforma");
+                + "&estado=in.(en_custodia,enviado,recibido,en_disputa)&select=monto,comision_plataforma");
         BigDecimal porLiberar = enCustodia.stream()
                 .map(t -> decimal(t.get("monto")).subtract(decimalOCero(t.get("comision_plataforma"))))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

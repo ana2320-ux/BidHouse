@@ -129,3 +129,53 @@
 .pago-contrato__verificar:hover:not(:disabled) {
   text-decoration: underline;
 }
+
+/* ── Etapas después del pago (fase 4b) ── */
+.pago-contrato__texto {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.pago-contrato__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pago-contrato__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.pago-contrato__input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.12);
+}
+
+.pago-contrato .detail-button--primary {
+  margin-top: 0;
+}
+
+.pago-contrato__confirmar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pago-contrato__estado--ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.pago-contrato__estado--alerta {
+  background: #fef3c7;
+  color: #92400e;
+}

@@ -12,6 +12,27 @@
 -- ─────────────────────────────────────────────────────────────
 
 
+-- 0) Comisión de BidHouse ─────────────────────────────────────
+-- Un solo lugar para la tasa: la usan el cierre de subastas (aquí) y la
+-- compra inmediata (fase3_compra.sql). 1 % por venta.
+-- ponytail: BidHouse Plus (suscripción) la baja a 0,5 %; cuando exista,
+-- recibir el vendedor y devolver 0.005 si está suscrito.
+create or replace function public.comision_plataforma(p_monto numeric)
+returns numeric
+language sql
+immutable
+as $$
+  select round(p_monto * 0.01, 2);
+$$;
+
+-- Los contratos que aún no se liberaron pasan a la comisión nueva. Los ya
+-- completados se dejan como están: ese dinero ya se le pagó al vendedor.
+update public.transacciones
+   set comision_plataforma = public.comision_plataforma(monto)
+ where estado in ('pendiente', 'en_custodia', 'enviado', 'recibido', 'en_disputa')
+   and comision_plataforma is distinct from public.comision_plataforma(monto);
+
+
 -- 1) Plazo para pagar ─────────────────────────────────────────
 -- El ganador tiene 48 h (decisión del equipo). Qué pasa si no paga se
 -- implementa con los pagos (fase 4).
@@ -23,7 +44,7 @@ alter table public.transacciones add column if not exists fecha_limite_pago time
 -- subasta activa cuya fecha_fin ya pasó, en UNA sola transacción:
 --   · sin pujas → la marca finalizada y le avisa al vendedor;
 --   · con pujas → la marca finalizada, marca la puja ganadora, crea el
---     contrato de garantía (transaccion 'pendiente') con la comisión del 3 %
+--     contrato de garantía (transaccion 'pendiente') con la comisión (1 %)
 --     y el plazo de pago, y avisa al ganador, al vendedor y a los que perdieron.
 --
 -- "for update skip locked": toma cada subasta con candado; si otra instancia
@@ -70,14 +91,13 @@ begin
 
     update public.pujas set es_ganadora = true where id = ganadora.id;
 
-    -- Contrato de garantía. Comisión fija del 3 % por ahora.
-    -- ponytail: BidHouse Plus (1 %) cambia este valor cuando exista la suscripción.
+    -- Contrato de garantía, con la comisión de comision_plataforma() (arriba).
     insert into public.transacciones
       (subasta_id, comprador_id, vendedor_id, puja_ganadora_id, monto,
        comision_plataforma, estado, fecha_limite_pago)
     values
       (s.id, s.pujador_lider_id, s.vendedor_id, ganadora.id, s.oferta_actual_mas_alta,
-       round(s.oferta_actual_mas_alta * 0.03, 2), 'pendiente', now() + interval '48 hours');
+       public.comision_plataforma(s.oferta_actual_mas_alta), 'pendiente', now() + interval '48 hours');
     con_ganador := con_ganador + 1;
 
     insert into public.notificaciones (usuario_id, tipo, titulo, mensaje, datos)

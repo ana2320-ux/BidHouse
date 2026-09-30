@@ -482,3 +482,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Cada contrato lleva a su activo, donde se paga, se envía o se confirma. */
+.contrato__enlace {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.contrato__enlace:hover {
+  box-shadow: 0 4px 14px rgba(20, 35, 53, 0.1);
+  transform: translateY(-1px);
+}
+
+.contrato--te-toca {
+  border-color: var(--gold);
+  background: #fffaf0;
+}
+
+.contrato__te-toca {
+  background: var(--gold);
+  color: var(--blue-dark);
+  font-weight: 700;
+}

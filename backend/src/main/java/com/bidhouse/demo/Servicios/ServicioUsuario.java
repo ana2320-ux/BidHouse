@@ -19,10 +19,8 @@ import com.bidhouse.demo.Modelos.NuevoUsuario;
 @Service
 public class ServicioUsuario {
 
-    // Estados de "transacciones" que ya terminaron. Cualquier otro es un
-    // contrato de garantía todavía en proceso.
-    // ponytail: "cancelada" es supuesto; confirmar contra el CHECK de
-    // transacciones.estado en Supabase cuando se implementen los contratos.
+    // Estados de "transacciones" que ya terminaron (ver el CHECK en
+    // backend/sql/fase4_pagos.sql). Cualquier otro es un contrato en proceso.
     private static final Set<String> ESTADOS_TERMINADOS = Set.of("completada", "cancelada");
 
     private static final int MAX_DESCRIPCION = 300;
@@ -54,7 +52,7 @@ public class ServicioUsuario {
         List<Map<String, Object>> pujas = db.consultar("/pujas?pujador_id=eq." + id + "&select=subasta_id");
         // Todas las transacciones donde es comprador O vendedor, las más nuevas primero.
         List<Map<String, Object>> transacciones = db.consultar("/transacciones?or=(vendedor_id.eq." + id
-                + ",comprador_id.eq." + id + ")&select=id,estado,monto,creado_en,comprador_id,subastas(titulo)"
+                + ",comprador_id.eq." + id + ")&select=id,estado,monto,creado_en,comprador_id,subastas(id,titulo)"
                 + "&order=creado_en.desc");
 
         List<?> estados = activos.stream().flatMap(a -> ((List<?>) a.get("subastas")).stream())

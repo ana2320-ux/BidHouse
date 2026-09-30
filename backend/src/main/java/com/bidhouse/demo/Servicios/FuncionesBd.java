@@ -83,6 +83,13 @@ final class FuncionesBd {
                     "No te alcanza el saldo: tienes " + usd(detalle) + ". Recarga saldo o paga con Mercado Pago.");
             case "MONTO_NO_COINCIDE" -> new ResponseStatusException(HttpStatus.CONFLICT,
                     "El monto pagado en Mercado Pago no coincide con el del contrato.");
+            // De la entrega (backend/sql/fase4b_entrega.sql):
+            case "NO_ES_TU_VENTA" -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Esta venta no es tuya.");
+            case "CONTRATO_NO_PAGADO" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El comprador todavía no ha pagado este contrato.");
+            case "CONTRATO_CERRADO" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Este contrato ya no admite ese cambio (ya se completó, se canceló o está en disputa).");
             case "USUARIO_NO_EXISTE" -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Tu cuenta no tiene un perfil asociado. Contacta a soporte.");
             default -> new ResponseStatusException(HttpStatus.BAD_GATEWAY,

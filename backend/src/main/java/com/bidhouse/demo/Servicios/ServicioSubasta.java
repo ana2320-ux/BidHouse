@@ -80,7 +80,8 @@ public class ServicioSubasta {
     private Map<String, Object> contratoDe(String idSubasta, String idUsuario) {
         List<Map<String, Object>> filas = db.consultar("/transacciones?subasta_id=eq." + idSubasta
                 + "&or=(comprador_id.eq." + idUsuario + ",vendedor_id.eq." + idUsuario + ")"
-                + "&select=id,estado,monto,comision_plataforma,fecha_limite_pago,comprador_id"
+                + "&select=id,estado,monto,comision_plataforma,fecha_limite_pago,fecha_limite_envio,"
+                + "guia_envio,enviado_en,fecha_limite_confirmacion,liberado_en,notas,comprador_id"
                 + "&order=creado_en.desc&limit=1");
         if (filas.isEmpty()) return null;
         Map<String, Object> contrato = new LinkedHashMap<>(filas.get(0));

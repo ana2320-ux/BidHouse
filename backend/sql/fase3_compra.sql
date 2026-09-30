@@ -62,12 +62,12 @@ begin
    where id = p_subasta_id;
 
   -- Mismo contrato que al ganar una subasta (fase2_cierre.sql), sin puja ganadora.
-  -- ponytail: comisión fija del 3 %; BidHouse Plus (1 %) la cambiará.
+  -- Comisión: la misma función que el cierre (fase2_cierre.sql).
   insert into public.transacciones
     (subasta_id, comprador_id, vendedor_id, monto, comision_plataforma, estado, fecha_limite_pago)
   values
     (s.id, p_comprador_id, s.vendedor_id, s.precio_compra_inmediata,
-     round(s.precio_compra_inmediata * 0.03, 2), 'pendiente', now() + interval '48 hours')
+     public.comision_plataforma(s.precio_compra_inmediata), 'pendiente', now() + interval '48 hours')
   returning * into contrato;
 
   insert into public.notificaciones (usuario_id, tipo, titulo, mensaje, datos)
