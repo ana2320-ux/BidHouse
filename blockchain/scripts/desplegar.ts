@@ -34,5 +34,10 @@ await contrato.waitForDeployment();
 const direccion = await contrato.getAddress();
 
 escribirEnv('BLOCKCHAIN_CONTRACT_ADDRESS', direccion, 'Contrato RegistroBidHouse en Sepolia (se despliega una vez).');
+const recibo = await contrato.deploymentTransaction()?.wait();
+if (recibo) {
+  escribirEnv('BLOCKCHAIN_CONTRACT_BLOCK', String(recibo.blockNumber),
+    'Bloque donde se desplegó el contrato (desde ahí se buscan sus eventos).');
+}
 console.log('Contrato desplegado:', direccion);
 console.log('Verlo en Etherscan: https://sepolia.etherscan.io/address/' + direccion);
