@@ -48,9 +48,9 @@ export default function Registro() {
 
   // ── Documentos y biometría para KYC (Estándar Rappi / Truora) ──
   const [docFrente, setDocFrente] = useState<File | null>(null);
-  const [docFrentePreview, setDocFrentePreview] = useState<string | null>(null);
+  const [, setDocFrentePreview] = useState<string | null>(null);
   const [docReverso, setDocReverso] = useState<File | null>(null);
-  const [docReversoPreview, setDocReversoPreview] = useState<string | null>(null);
+  const [, setDocReversoPreview] = useState<string | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
   const [analisisEtapa, setAnalisisEtapa] = useState<number>(0);
@@ -224,7 +224,7 @@ export default function Registro() {
     return (
       <main className="bh-acceso">
         <div className="bh-acceso__logo bh-logo">
-          Bid<span>House</span>
+          Bid<span>Luxury</span>
         </div>
         <div className="bh-acceso__card registro-exito">
           <div className="registro-exito__icono">
@@ -247,7 +247,7 @@ export default function Registro() {
     <main className="bh-acceso">
       <Link to="/" className="bh-acceso__logo" title="Volver al inicio">
         <div className="bh-logo">
-          Bid<span>House</span>
+          Bid<span>Luxury</span>
         </div>
       </Link>
 
@@ -261,7 +261,7 @@ export default function Registro() {
             </svg>
           </div>
           <div>
-            <strong>Parece que eres nuevo en BidHouse</strong>
+            <strong>Parece que eres nuevo en BidLuxury</strong>
             No encontramos una cuenta con <b>{desdeLogin.email}</b>. Completa tus datos para crearla.
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function Registro() {
         <h1>{paso === 1 ? 'Crear cuenta' : 'Verificación de Identidad'}</h1>
         <p className="bh-acceso__subtitulo">
           {paso === 1
-            ? 'Ingresa tus datos personales para configurar tu cuenta en BidHouse.'
+            ? 'Ingresa tus datos personales para configurar tu cuenta en BidLuxury.'
             : 'Para proteger a todos nuestros clientes vamos a validar tu documento de identidad y realizar una prueba biométrica.'}
         </p>
 
@@ -594,7 +594,7 @@ export default function Registro() {
 
         <p className="bh-acceso__legal">
           Al crear una cuenta, aceptas los <a href="#">Términos de servicio</a> y la{' '}
-          <a href="#">Política de privacidad</a> de BidHouse.
+          <a href="#">Política de privacidad</a> de BidLuxury.
         </p>
       </div>
 
@@ -603,7 +603,7 @@ export default function Registro() {
         <Link to="/login" className="bh-acceso__link">Iniciar sesión</Link>
       </p>
 
-      <footer className="bh-acceso__pie">© 2026 BidHouse. Subastas verificadas.</footer>
+      <footer className="bh-acceso__pie">© 2026 BidLuxury. Subastas verificadas.</footer>
     </main>
   );
 }

@@ -91,7 +91,7 @@ export default function Login() {
     <main className="bh-acceso">
       <Link to="/" className="bh-acceso__logo" title="Volver al inicio">
         <div className="bh-logo">
-          Bid<span>House</span>
+          Bid<span>Luxury</span>
         </div>
       </Link>
 
@@ -155,16 +155,16 @@ export default function Login() {
 
         <p className="bh-acceso__legal">
           Al continuar, aceptas los <a href="#">Términos de servicio</a> y la{' '}
-          <a href="#">Política de privacidad</a> de BidHouse.
+          <a href="#">Política de privacidad</a> de BidLuxury.
         </p>
       </div>
 
-      <div className="login-separador">¿Eres nuevo en BidHouse?</div>
+      <div className="login-separador">¿Eres nuevo en BidLuxury?</div>
       <Link to="/registro" className="btn btn--outline bh-acceso__boton login-crear">
-        Crear tu cuenta de BidHouse
+        Crear tu cuenta de BidLuxury
       </Link>
 
-      <footer className="bh-acceso__pie">© 2026 BidHouse. Subastas verificadas.</footer>
+      <footer className="bh-acceso__pie">© 2026 BidLuxury. Subastas verificadas.</footer>
     </main>
   );
 }

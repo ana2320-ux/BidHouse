@@ -7,7 +7,7 @@ export default function Navbar() {
       <div className="bh-container bh-header__inner">
         <Link to="/" title="Home" className="bh-header__logo">
           <div className="bh-logo">
-            Bid<span>House</span>
+            Bid<span>Luxury</span>
           </div>
         </Link>
 
