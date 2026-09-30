@@ -48,6 +48,11 @@ public class SupabaseClient {
                 .baseUrl(baseUrl)
                 .defaultHeader("apikey", llave)
                 .defaultHeader("Authorization", "Bearer " + llave)
+                // Engañamos al anti-bots de Cloudflare para que deje pasar las peticiones de Java
+                .defaultHeader("User-Agent", "BidHouse-Backend/1.0")
+                // Forzamos a que siempre envíe y reciba JSON por defecto
+                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("Accept", MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
@@ -61,7 +66,6 @@ public class SupabaseClient {
         List<Map<String, Object>> creadas = rest.post()
                 .uri("/" + tabla)
                 .header("Prefer", "return=representation")
-                .contentType(MediaType.APPLICATION_JSON)
                 .body(fila)
                 .retrieve()
                 .body(FILAS);
@@ -78,7 +82,6 @@ public class SupabaseClient {
     public void actualizar(String rutaYFiltros, Map<String, Object> cambios) {
         rest.patch()
                 .uri(rutaYFiltros)
-                .contentType(MediaType.APPLICATION_JSON)
                 .body(cambios)
                 .retrieve()
                 .toBodilessEntity();
@@ -90,7 +93,6 @@ public class SupabaseClient {
     public Map<String, Object> llamarFuncion(String nombre, Map<String, Object> parametros) {
         return rest.post()
                 .uri("/rpc/{nombre}", nombre)
-                .contentType(MediaType.APPLICATION_JSON)
                 .body(parametros)
                 .retrieve()
                 .body(OBJETO);
@@ -122,7 +124,6 @@ public class SupabaseClient {
         try {
             respuesta = auth.post()
                     .uri("/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of("email", email, "password", password))
                     .retrieve()
                     .body(OBJETO);
@@ -132,7 +133,7 @@ public class SupabaseClient {
 
         // La forma de la respuesta depende de la config del proyecto:
         //  - sin confirmación de correo (la de hoy): { access_token, ..., user: { id, ... } }
-        //  - con confirmación de correo:              { id, ..., identities: [...] }
+        //  - con confirmación de correo:             { id, ..., identities: [...] }
         @SuppressWarnings("unchecked")
         Map<String, Object> usuario = (Map<String, Object>) respuesta.getOrDefault("user", respuesta);
 
@@ -151,30 +152,29 @@ public class SupabaseClient {
     }
 
     /// METODO NUEVO
-    //Explicame esto
-    public boolean existeUsuario(String email){
-        //como que se le pide la API o la base de datos que traiga todos los usuarios, nose si solo trae el email, o todos los datos del los usuarios
-        List<Map<String, Object>> usuarios = rest.get() //ahi le pide un mapa de usuarios a la API, osea la base de datos
-        .uri("/usuarios?email=eq.{email}&select=id&limit=1", email) //aqui se le piden solo los usuarios que tengan el email, que le envio no?
-        .retrieve() //se piden los usuarios a la API, osea a la base de datos que cumplan la condicion
-        .body(FILAS); //Ni idea a que se refiere con esto, como asi que filas, tal vez algo de la db
+    public boolean existeUsuario(String email) {
+        // Se le pide a la base de datos que busque un usuario con ese email exacto,
+        // pero que solo traiga el 'id' (para no gastar datos) y se detenga al encontrar el primero (limit=1).
+        List<Map<String, Object>> usuarios = rest.get()
+        .uri("/usuarios?email=eq.{email}&select=id&limit=1", email)
+        .retrieve()
+        .body(FILAS); // Convierte el JSON crudo en una Lista de Mapas de Java
 
-        return !usuarios.isEmpty(); //si la lista de usuarios que trajo esta vacia, osea que no encontro ningun usuario con ese email, devuelve false, si encontro al menos uno devuelve true
+        return !usuarios.isEmpty(); // Si la lista no está vacía, el usuario existe
     } 
 
-    ///METODO NUEVO
-    //Explicame esto
+    /// METODO NUEVO
     // POST /auth/v1/token?grant_type=password. En Supabase, "iniciar sesión" es
     // cambiar correo + contraseña por un token (JWT) que demuestra quién eres.
     public Map<String, Object> iniciarSesion(String email, String password) {
         try {
-            return auth.post() //utiliza una llave publica para que no todos puedan iniciar sesion, solo los que tengan la llave publica
-                    .uri("/token?grant_type=password") //se genera un token (JWT) para que con ese token sepamos quien es el usuario
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("email", email, "password", password)) //se mete en el mapa el email y la contraseña que le paso el usuario para que la API de supabase me devuelva un token (JWT)
+            return auth.post() // Utiliza el RestClient que tiene la llave pública
+                    .uri("/token?grant_type=password") // Ruta para intercambiar credenciales por el JWT
+                    .body(Map.of("email", email, "password", password)) // Envía el JSON con las credenciales
                     .retrieve()
-                    .body(OBJETO); //llega un objeto y no un JSON, por eso se usa OBJETO, que es un mapa de String a Object, osea un objeto JSON
-        } catch (RestClientResponseException e) { // en caso de que no se encuentre el usuario o la contraseña sea incorrecta, se lanza una excepcion y se traduce a un error de HTTP 401 Unauthorized
+                    .body(OBJETO); // Lo convierte a un Map<String, Object>
+        } catch (RestClientResponseException e) { 
+            // En caso de que no se encuentre el usuario o la contraseña sea incorrecta, se lanza error
             throw traducirErrorDeAuth(e);
         }
     }

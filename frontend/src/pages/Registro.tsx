@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import './Registro.css';
+import { supabase } from '../lib/supabaseClient';
 
 // Lo que /login manda en el "state" de la navegación cuando el correo es nuevo.
 type EstadoDesdeLogin = { email?: string; esNuevo?: boolean } | null;
@@ -27,9 +28,12 @@ const StatusIcon = ({ completado }: { completado: boolean }) => (
 export default function Registro() {
   const navigate = useNavigate();
   const desdeLogin = useLocation().state as EstadoDesdeLogin;
+  
+  // Estado para el código de verificación de Supabase
+  const [codigoVerificacion, setCodigoVerificacion] = useState('');
 
-  // ── Control de pasos (Paso 1: Datos de cuenta | Paso 2: Verificación KYC) ──
-  const [paso, setPaso] = useState<1 | 2>(1);
+  // ── Control de pasos (Paso 1: Datos | Paso 2: KYC | Paso 3: Código OTP) ──
+  const [paso, setPaso] = useState<1 | 2 | 3>(1);
 
   // ── Estado del formulario de datos personales ──
   const [formData, setFormData] = useState({
@@ -180,39 +184,39 @@ export default function Registro() {
     setAnalisisEtapa(1);
 
     try {
-      // Simulación de etapas de análisis estilo Rappi / Truora
+      // 1. Simulación visual de etapas de análisis
       await new Promise((r) => setTimeout(r, 700));
       setAnalisisEtapa(2);
       await new Promise((r) => setTimeout(r, 700));
       setAnalisisEtapa(3);
       await new Promise((r) => setTimeout(r, 600));
 
-      await api('/api/usuarios/registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: perfil.nombre,
-          apellido: perfil.apellido,
-          documentoIdentidad: perfil.documento_identidad,
-          telefono: perfil.telefono,
-          email: perfil.email,
-          direccion: perfil.direccion,
-          ciudad: perfil.ciudad,
-          pais: perfil.pais,
-          esVendedor: perfil.es_vendedor,
-          password,
-        }),
+      // 2. Registro real en Supabase
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: perfil.email,
+        password: password,
+        options: {
+          data: {
+            nombre: perfil.nombre,
+            apellido: perfil.apellido,
+            documento_identidad: perfil.documento_identidad,
+            telefono: perfil.telefono,
+            direccion: perfil.direccion,
+            ciudad: perfil.ciudad,
+            pais: perfil.pais,
+            es_vendedor: perfil.es_vendedor
+          }
+        }
       });
 
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/login');
-      }, 2500);
-    } catch (err) {
+      if (signUpError) throw signUpError;
+
+      // 3. Si se registró correctamente, pasamos a la pantalla de pedir el código OTP
+      setPaso(3);
+
+    } catch (err: any) {
       setError(
-        err instanceof ApiError
-          ? err.message
-          : 'No pudimos conectar con el servidor. Intenta de nuevo en un momento.',
+        err.message || 'No pudimos conectar con el servidor. Intenta de nuevo en un momento.'
       );
     } finally {
       setLoading(false);
@@ -220,6 +224,35 @@ export default function Registro() {
     }
   };
 
+  // ── Validar Código OTP (Paso 3) ──
+  const handleVerificarCodigo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: codigoVerificacion,
+        type: 'signup', // Le decimos a Supabase que es un código de registro
+      });
+
+      if (error) throw error;
+
+      // ¡Éxito! El correo está verificado y el usuario está logueado
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/perfil'); // Lo enviamos directo a su bóveda/perfil
+      }, 2500);
+
+    } catch (err: any) {
+      setError('Código incorrecto o expirado. Por favor, revisa tu correo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Pantalla de Éxito Final ──
   if (success) {
     return (
       <main className="bh-acceso">
@@ -235,7 +268,7 @@ export default function Registro() {
           </div>
           <h1>¡Cuenta creada y validada!</h1>
           <p>
-            Tu identidad y documentos han sido procesados mediante el protocolo biométrico KYC.
+            Tu identidad y documentos han sido procesados mediante el protocolo biométrico.
             Serás redirigido al inicio de sesión en unos segundos...
           </p>
         </div>
@@ -272,7 +305,9 @@ export default function Registro() {
         <p className="bh-acceso__subtitulo">
           {paso === 1
             ? 'Ingresa tus datos personales para configurar tu cuenta en BidLuxury.'
-            : 'Para proteger a todos nuestros clientes vamos a validar tu documento de identidad y realizar una prueba biométrica.'}
+            : paso === 2 
+            ? 'Para proteger a todos nuestros clientes vamos a validar tu documento de identidad y realizar una prueba biométrica.'
+            : 'Por favor verifica tu bandeja de entrada.'}
         </p>
 
         {error && <div className="bh-acceso__error">{error}</div>}
@@ -485,11 +520,11 @@ export default function Registro() {
                   <ul className="kyc-analisis__checklist">
                     <li className={analisisEtapa >= 1 ? 'paso-ok' : 'paso-espera'}>
                       <StatusIcon completado={analisisEtapa >= 1} />
-                      <span>Extracción de datos del documento (OCR)</span>
+                      <span>Extracción de datos del documento </span>
                     </li>
                     <li className={analisisEtapa >= 2 ? 'paso-ok' : 'paso-espera'}>
                       <StatusIcon completado={analisisEtapa >= 2} />
-                      <span>Verificación biométrica facial 1:1 (Liveness)</span>
+                      <span>Verificación biométrica facial </span>
                     </li>
                     <li className={analisisEtapa >= 3 ? 'paso-ok' : 'paso-espera'}>
                       <StatusIcon completado={analisisEtapa >= 3} />
@@ -559,7 +594,7 @@ export default function Registro() {
                         ) : (
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                             <path d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"></path>
-                            </svg>
+                          </svg>
                         )}
                       </div>
                       <h3>Prueba Biometria</h3>
@@ -567,8 +602,6 @@ export default function Registro() {
                       <span className="kyc-status-badge">{selfie ? 'Biometría capturada' : 'Tomar selfie'}</span>
                     </div>
                   </label>
-
-                  
 
                   <div className="registro-botones-paso2">
                     <button
@@ -588,6 +621,44 @@ export default function Registro() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* PASO 3: VERIFICACIÓN DE CORREO  */}
+          {paso === 3 && (
+            <div className="kyc-container" style={{ textAlign: 'center', padding: '32px 0' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="1.5">
+                  <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '12px' }}>Verifica tu correo electrónico</h2>
+              <p style={{ color: 'var(--gray-mid)', marginBottom: '32px', fontSize: '0.95rem' }}>
+                Hemos enviado un código de seguridad de 8 dígitos a <strong>{formData.email}</strong>. 
+                Ingrésalo a continuación para activar tu cuenta C2C.
+              </p>
+
+              <div className="bh-campo" style={{ maxWidth: '250px', margin: '0 auto 24px auto' }}>
+                <input
+                  type="text"
+                  maxLength={8}
+                  placeholder="00000000"
+                  value={codigoVerificacion}
+                  onChange={(e) => setCodigoVerificacion(e.target.value.replace(/\D/g, ''))}
+                  style={{ fontSize: '2rem', textAlign: 'center', letterSpacing: '0.2em', padding: '16px' }}
+                  required
+                />
+              </div>
+
+              <button
+                type="button"
+                className="btn btn--primary bh-acceso__boton"
+                onClick={handleVerificarCodigo}
+                disabled={loading || codigoVerificacion.length < 8}
+                style={{ maxWidth: '300px', margin: '0 auto' }}
+              >
+                {loading ? 'Validando...' : 'Confirmar código'}
+              </button>
             </div>
           )}
         </form>
