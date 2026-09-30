@@ -10,6 +10,6 @@ public class TestController {
 
     @GetMapping("/status")
     public String getStatus() {
-        return "El backend de BidHouse está melo";
+        return "El backend de BidLuxury está melo";
     }
 }

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import "./Home.css";
 import { Link } from "react-router-dom";
 import { leerSesion } from "../lib/sesion";
@@ -28,7 +27,7 @@ const steps = [
   {
     n: "02",
     title: "Deposita en custodia",
-    body: "Tus fondos se bloquean en un contrato digital usando Blockchain(escrow). Nadie, ni BidHouse, puede moverlos fuera de las reglas del contrato.",
+    body: "Tus fondos se bloquean en un contrato digital usando Blockchain(escrow). Nadie, ni BidLuxury, puede moverlos fuera de las reglas del contrato.",
   },
   {
     n: "03",
@@ -41,28 +40,6 @@ const steps = [
     body: "Al cerrar el lote, el contrato transfiere el activo tokenizado y libera el pago en el mismo bloque. Sin intermediarios, sin esperas bancarias ni riesgos.",
   },
 ];
-
-// ---------- Utilidades ----------
-
-function useCountdown(target: number) {
-  const [remaining, setRemaining] = useState(() => target - Date.now());
-
-  useEffect(() => {
-    const id = setInterval(() => setRemaining(target - Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [target]);
-
-  const clamped = Math.max(remaining, 0);
-  const h = Math.floor(clamped / (1000 * 60 * 60));
-  const m = Math.floor((clamped / (1000 * 60)) % 60);
-  const s = Math.floor((clamped / 1000) % 60);
-
-  return { h, m, s };
-}
-
-function pad(n: number) {
-  return n.toString().padStart(2, "0");
-}
 
 // ---------- Íconos (SVG inline, sin dependencias externas) ----------
 
@@ -102,35 +79,6 @@ function IconBolt() {
   );
 }
 
-// ---------- Subcomponentes ----------
-
-function LotTicket({ lot }: { lot: Lot }) {
-  
-  
-}
-
-function LotCard({ lot }: { lot: Lot }) {
-  const { h, m } = useCountdown(lot.endsAt);
-  return (
-    <article className="lot-card">
-      <div className="lot-card__image" />
-      <div className="lot-card__body">
-        <span className="lot-card__category">{lot.category}</span>
-        <h4 className="lot-card__title">{lot.title}</h4>
-        <div className="lot-card__meta">
-          <div>
-            <span className="lot-card__label">Puja actual</span>
-            <strong>{lot.currentBid}</strong>
-          </div>
-          <div className="lot-card__time">
-            Cierra en {h}h {pad(m)}m
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 // ---------- Página ----------
 
 export default function Home() {
@@ -154,7 +102,7 @@ export default function Home() {
                 El activo cambia de dueño en el mismo bloque.
               </h1>
               <p className="hero__sub">
-                BidHouse organiza subastas de relojes, arte, autos clásicos y bienes raíces de alto valor,
+                BidLuxury organiza subastas de relojes, arte, autos clásicos y bienes raíces de alto valor,
                 con custodia en contrato inteligente y liquidación instantánea. Ninguna subasta se pierde,
                 ninguna transferencia depende de un tercero.
               </p>

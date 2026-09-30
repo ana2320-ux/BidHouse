@@ -172,7 +172,7 @@ export default function DetalleActivo() {
     return (
       <main className="detail-state">
         <div className="detail-state__card">
-          <span className="detail-state__eyebrow">BidHouse</span>
+          <span className="detail-state__eyebrow">BidLuxury</span>
           <h1>Activo no encontrado</h1>
           <p>No existe una subasta publicada con el identificador solicitado.</p>
           <Link to="/catalogo" className="detail-button detail-button--secondary">Volver al catálogo</Link>
@@ -185,7 +185,7 @@ export default function DetalleActivo() {
     return (
       <main className="detail-state">
         <div className="detail-state__card">
-          <span className="detail-state__eyebrow">BidHouse</span>
+          <span className="detail-state__eyebrow">BidLuxury</span>
           <h1>No fue posible cargar este activo.</h1>
           <p>Verifica la conexión con el backend e inténtalo nuevamente.</p>
           <Link to="/catalogo" className="detail-button detail-button--secondary">Volver al catálogo</Link>
@@ -199,7 +199,7 @@ export default function DetalleActivo() {
       <div className="bh-container detail-layout">
         <section className="detail-column detail-column--media" aria-label="Información visual y técnica">
           <div className="detail-hero-image">
-            {imagen ? <img src={imagen} alt={subasta.titulo} /> : <div className="detail-image-fallback">BidHouse</div>}
+            {imagen ? <img src={imagen} alt={subasta.titulo} /> : <div className="detail-image-fallback">BidLuxury</div>}
             <span className={`detail-image-badge ${verificado ? '' : 'detail-image-badge--pending'}`}>
               <span aria-hidden="true">◉</span> {verificado ? 'Inspeccionado' : 'En verificación'}
             </span>
@@ -213,7 +213,7 @@ export default function DetalleActivo() {
             </div>
             <p>
               {verificado
-                ? 'Este activo ha sido verificado mediante los procesos de validación disponibles en BidHouse.'
+                ? 'Este activo ha sido verificado mediante los procesos de validación disponibles en BidLuxury.'
                 : 'La documentación de este activo se encuentra en proceso de verificación.'}
             </p>
             <div className="documentation-items">
