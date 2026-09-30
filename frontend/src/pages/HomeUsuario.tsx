@@ -4,13 +4,8 @@ import { api } from '../api';
 import type { Sesion } from '../lib/sesion';
 import './HomeUsuario.css';
 
-// Home para quien ya inició sesión (estilo Mercado Libre): saludo, panel de
-// categorías con fotos, accesos a lo suyo y servicios. Lo dibuja Home.tsx
-// cuando hay sesión; sin sesión se sigue viendo el home público de siempre.
-
 type Categoria = { id: string; nombre: string };
 
-// Solo los campos de GET /api/subastas que se usan aquí.
 type SubastaCatalogo = {
   id: string;
   activos: {
@@ -21,9 +16,6 @@ type SubastaCatalogo = {
 
 type TarjetaCategoria = Categoria & { imagen: string | null; total: number };
 
-// ponytail: las categorías no tienen foto propia (categorias.imagen_url está
-// vacía), así que se usa la primera foto de un activo de esa categoría. Si el
-// equipo llena imagen_url en Supabase, usar esa y quitar este cálculo.
 function armarTarjetas(categorias: Categoria[], subastas: SubastaCatalogo[]): TarjetaCategoria[] {
   return categorias
     .map((c) => {
@@ -31,7 +23,6 @@ function armarTarjetas(categorias: Categoria[], subastas: SubastaCatalogo[]): Ta
       const imagen = deEsta.map((s) => s.activos?.imagenes?.[0]).find(Boolean) ?? null;
       return { ...c, imagen, total: deEsta.length };
     })
-    // Las categorías con más subastas primero: son las que ocupan los cuadros grandes.
     .sort((a, b) => b.total - a.total);
 }
 
@@ -41,7 +32,6 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Promise.all lanza las dos peticiones a la vez y espera a que lleguen ambas.
     Promise.all([
       api<Categoria[]>('/api/categorias'),
       api<SubastaCatalogo[]>('/api/subastas'),
@@ -52,7 +42,7 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
 
   return (
     <main className="inicio">
-      {/* ── Saludo + panel de categorías ── */}
+      {/* ── Saludo + panel de categorías (Hero) ── */}
       <section className="inicio-hero">
         <div className="bh-container">
           <h1 className="inicio-hero__saludo">Bienvenido, {usuario.nombre}</h1>
@@ -66,14 +56,13 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
 
           <div className="inicio-categorias">
             {tarjetas === null && !error &&
-              // Mientras cargan: cuadros grises con la misma forma, para que
-              // la página no "salte" cuando llegan los datos.
-              Array.from({ length: 6 }, (_, i) => <div key={i} className="inicio-categoria inicio-categoria--cargando" />)}
+              Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="inicio-categoria inicio-categoria--cargando" />
+              ))}
 
             {tarjetas?.map((c) => (
               <Link
                 key={c.id}
-                // El catálogo lee ?categoria= para llegar ya filtrado.
                 to={`/catalogo?categoria=${encodeURIComponent(c.nombre)}`}
                 className="inicio-categoria"
               >
@@ -88,11 +77,7 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
         </div>
       </section>
 
-      {/* ── Accesos a lo suyo (los "cuadros blancos") ──
-          ponytail: todavía no hay endpoints de "mis pujas" ni "mis ventas" del
-          usuario con sesión (el backend usa un usuario fijo), así que son
-          accesos con su invitación a actuar. Cuando existan, mostrar aquí la
-          lista real: vas ganando / te superaron, y el estado de cada venta. */}
+      {/* ── Accesos principales ── */}
       <section className="bh-container inicio-accesos">
         <article className="inicio-acceso">
           <h2>Mis pujas</h2>
@@ -119,7 +104,7 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
           ) : (
             <>
               <p>Verifica tu identidad para poder pujar y vender en BidHouse.</p>
-              <button type="button" className="inicio-acceso__boton" disabled>Próximamente</button>
+              <Link to="/verificacion-kyc" className="inicio-acceso__boton">Verificar identidad</Link>
             </>
           )}
         </article>
@@ -132,9 +117,7 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
         </article>
       </section>
 
-      {/* ── Servicios ──
-          ponytail: son solo la vitrina; ninguno está implementado ni tiene
-          precio definido. Por eso los botones dicen "Próximamente". */}
+      {/* ── Servicios ── */}
       <section className="bh-container inicio-servicios">
         <h2 className="inicio-servicios__titulo">Servicios para vender mejor</h2>
 
@@ -175,8 +158,6 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
     </main>
   );
 }
-
-// ── Íconos (SVG inline, sin dependencias externas, como en Home.tsx) ──
 
 function IconoMartillo() {
   return (

@@ -208,7 +208,7 @@ export default function DetalleActivo() {
 
           <section className="detail-card documentation-card">
             <div className="detail-card__heading">
-              <span className="detail-icon" aria-hidden="true">⌑</span>
+              <span className="detail-icon" aria-hidden="true"> </span>
               <h2>Documentación Autenticada</h2>
             </div>
             <p>
@@ -224,7 +224,7 @@ export default function DetalleActivo() {
 
           <section className="detail-card specifications-card">
             <div className="detail-card__heading">
-              <span className="detail-icon" aria-hidden="true">▦</span>
+              <span className="detail-icon" aria-hidden="true"> </span>
               <h2>Especificaciones Técnicas</h2>
             </div>
             <dl className="specifications-grid">

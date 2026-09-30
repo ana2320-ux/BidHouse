@@ -1,61 +1,38 @@
-/* ── Página ──
-   El fondo de toda la página es amarillo: así el amarillo con el que termina el
-   degradado de arriba sigue hasta el final, sin franja blanca debajo.
-   --amarillo-fondo es el dorado del navbar (#f5b41b) con ~25% de blanco, un
-   poco más suave para un fondo grande. Se define aquí y lo hereda .inicio-hero
-   (que está adentro), así que para ajustar el tono basta cambiar esta línea.
-   Para volver al dorado exacto del navbar: var(--gold). */
 .inicio {
-  --amarillo-fondo: #f8c754;
-  background: var(--amarillo-fondo);
-  padding-bottom: 64px;
+  background-color: #f7f9fc;
+  min-height: calc(100vh - 72px);
+  padding-bottom: 72px;
 }
 
-/* OPCIÓN ANTERIOR (página gris claro debajo del degradado).
-   Para volver a ella: comenta el bloque .inicio de arriba y el .inicio-hero
-   de abajo, y descomenta estos dos.
-
-.inicio {
-  background: var(--gray-light);
-  padding-bottom: 64px;
-}
-
+/* ── Saludo + panel de categorías (Hero) ── */
 .inicio-hero {
-  background: linear-gradient(
-    180deg,
-    var(--blue-dark) 0%,
-    var(--blue) 35%,
-    var(--gold) 100%,
-    var(--gray-light) 100%
-  );
-  padding: 36px 0 40px;
+  background: linear-gradient(135deg, #0f3f66 0%, #020973f5 50%, #0f3f66 100%);
+  position: relative;
+  padding: 44px 0 52px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(7, 21, 36, 0.12);
 }
-*/
 
-/* ── Saludo + panel de categorías ──
-   Degradado azul → amarillo con los mismos colores del navbar (el azul del
-   avatar y el dorado del logo y los botones). Va en porcentajes y no en px
-   para que se estire con la altura real del bloque (en celular es más alto).
-   Termina en el mismo amarillo del fondo de .inicio, así no se nota la unión. */
-.inicio-hero {
-  background: linear-gradient(
-    180deg,
-    var(--blue-dark) 0%,
-    var(--blue) 35%,
-    var(--amarillo-fondo) 100%
-  );
-  padding: 36px 0 40px;
+.inicio-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 20%, rgba(245, 180, 27, 0.09) 0%, transparent 55%);
+  pointer-events: none;
 }
 
 .inicio-hero__saludo {
-  font-size: 2rem;
+  font-size: 2.2rem;
+  font-family: var(--font-serif);
+  font-weight: 500;
   color: var(--white);
+  letter-spacing: -0.01em;
 }
 
 .inicio-hero__sub {
-  margin-top: 4px;
-  font-size: 0.98rem;
-  color: rgba(255, 255, 255, 0.8);
+  margin-top: 6px;
+  font-size: 1rem;
+  color: #c4d4e3;
 }
 
 .inicio-hero__error {
@@ -67,14 +44,12 @@
   font-size: 0.9rem;
 }
 
-/* 4 columnas: las 2 primeras categorías ocupan 2 columnas cada una (fila de
-   arriba) y las siguientes 4 van de a una (fila de abajo). */
 .inicio-categorias {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 170px;
-  gap: 14px;
-  margin-top: 24px;
+  grid-auto-rows: 175px;
+  gap: 16px;
+  margin-top: 28px;
 }
 
 .inicio-categoria:nth-child(-n + 2) {
@@ -88,8 +63,16 @@
   display: flex;
   align-items: flex-end;
   border-radius: 14px;
-  background: var(--blue-dark);
-  box-shadow: 0 6px 20px rgba(20, 35, 53, 0.12);
+  background: #091e36;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.inicio-categoria:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 180, 27, 0.5);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
 .inicio-categoria img {
@@ -98,45 +81,46 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform 0.5s ease;
 }
 
 .inicio-categoria:hover img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
-/* Degradado oscuro abajo para que el texto blanco se lea sobre cualquier foto. */
 .inicio-categoria::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(10, 25, 41, 0.85) 100%);
+  background: linear-gradient(180deg, rgba(7, 21, 36, 0.1) 20%, rgba(7, 21, 36, 0.9) 100%);
 }
 
 .inicio-categoria__texto {
-  position: relative; /* por encima del degradado */
+  position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px 18px;
+  padding: 18px 20px;
   color: var(--white);
 }
 
 .inicio-categoria__texto strong {
   font-family: var(--font-serif);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .inicio-categoria__texto span {
-  font-size: 0.8rem;
-  opacity: 0.85;
+  font-size: 0.82rem;
+  color: #d1dde8;
+  margin-top: 2px;
 }
 
 .inicio-categoria--cargando {
-  background: linear-gradient(90deg, #dfe4ea 0%, #eef1f4 50%, #dfe4ea 100%);
+  background: linear-gradient(90deg, #10263f 0%, #1a385b 50%, #10263f 100%);
   background-size: 200% 100%;
-  animation: inicio-brillo 1.2s linear infinite;
+  animation: inicio-brillo 1.4s linear infinite;
   box-shadow: none;
 }
 
@@ -146,68 +130,89 @@
   }
 }
 
-/* ── Accesos (los cuadros blancos) ── */
+/* ── Accesos Principales ── */
 .inicio-accesos {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-top: 28px;
+  gap: 16px;
+  margin-top: -24px;
+  position: relative;
+  z-index: 2;
 }
 
 .inicio-acceso {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 20px 18px;
+  gap: 14px;
+  padding: 24px 20px;
   background: var(--white);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(20, 35, 53, 0.08);
+  border: 1px solid #e3e8ef;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 35, 60, 0.05);
   text-align: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.inicio-acceso:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 35, 60, 0.09);
+  border-color: #cbd5e1;
 }
 
 .inicio-acceso h2 {
   align-self: flex-start;
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
+  color: var(--ink);
 }
 
 .inicio-acceso__icono {
-  width: 76px;
-  height: 76px;
+  width: 72px;
+  height: 72px;
   padding: 14px;
   border-radius: 50%;
-  background: #fdf3da;
+  background: #f4f8fc;
+  border: 1px solid #e1ecf6;
   fill: none;
-  stroke: var(--gold-dark);
-  stroke-width: 2.4;
+  stroke: var(--blue);
+  stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.inicio-acceso:hover .inicio-acceso__icono {
+  transform: scale(1.05);
+  background: #eaf2fa;
 }
 
 .inicio-acceso p {
   flex: 1;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   color: var(--gray-mid);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .inicio-acceso__boton {
   width: 100%;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  background: #e8f0f8;
+  padding: 10px 14px;
+  border: 1px solid #d5e2ef;
+  border-radius: 9px;
+  background: #f0f6fb;
   color: var(--blue);
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .inicio-acceso__boton:hover:not(:disabled) {
-  background: #d7e5f2;
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--white);
 }
 
 .inicio-acceso__boton:disabled,
@@ -220,38 +225,42 @@
 .inicio-acceso__ok {
   width: 100%;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 9px;
   background: #dcfce7;
   color: #15803d;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 600;
+  border: 1px solid #bbf7d0;
 }
 
 /* ── Servicios ── */
 .inicio-servicios {
-  margin-top: 48px;
+  margin-top: 52px;
 }
 
 .inicio-servicios__titulo {
-  font-size: 1.4rem;
-  margin-bottom: 16px;
+  font-size: 1.45rem;
+  margin-bottom: 18px;
+  font-family: var(--font-serif);
+  color: var(--ink);
 }
 
-/* La suscripción va como banner ancho, igual que "Beneficios" en Mercado Libre. */
 .inicio-plus {
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 28px;
-  padding: 26px 30px;
-  border-radius: 14px;
-  background: linear-gradient(120deg, var(--blue-dark), var(--blue));
+  padding: 28px 34px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #091a2e 0%, #0f3f66 100%);
   color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(9, 26, 46, 0.12);
 }
 
 .inicio-plus__etiqueta {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--gold);
@@ -259,13 +268,13 @@
 
 .inicio-plus h3 {
   margin: 6px 0 4px;
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   color: var(--white);
 }
 
 .inicio-plus p {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .inicio-plus__comision {
@@ -279,12 +288,13 @@
 .inicio-plus__antes {
   font-size: 1.6rem;
   text-decoration: line-through;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .inicio-plus__despues {
   font-size: 2.6rem;
   color: var(--gold);
+  font-weight: 600;
 }
 
 .inicio-plus__boton {
@@ -294,48 +304,58 @@
 .inicio-servicios__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 14px;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .inicio-servicio {
   display: flex;
-  gap: 18px;
-  padding: 22px;
+  gap: 20px;
+  padding: 24px;
   background: var(--white);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(20, 35, 53, 0.08);
+  border: 1px solid #e3e8ef;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 35, 60, 0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.inicio-servicio:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 35, 60, 0.08);
+  border-color: #cbd5e1;
 }
 
 .inicio-servicio__icono {
   flex-shrink: 0;
   width: 56px;
   height: 56px;
-  padding: 10px;
+  padding: 11px;
   border-radius: 12px;
-  background: #e8f0f8;
+  background: #f0f6fc;
+  border: 1px solid #e1ecf6;
   fill: none;
   stroke: var(--blue);
-  stroke-width: 2.4;
+  stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .inicio-servicio h3 {
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
+  color: var(--ink);
 }
 
 .inicio-servicio p {
   margin: 6px 0 14px;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   color: var(--gray-mid);
   line-height: 1.5;
 }
 
 .inicio-servicio__boton {
-  padding: 7px 14px;
+  padding: 8px 16px;
   border: 1px solid var(--blue);
   border-radius: 8px;
   background: none;
@@ -343,12 +363,18 @@
   font-family: var(--font-sans);
   font-size: 0.82rem;
   font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-/* ── Pantallas más angostas ── */
+.inicio-servicio__boton:hover:not(:disabled) {
+  background: var(--blue);
+  color: var(--white);
+}
+
 @media (max-width: 900px) {
   .inicio-accesos {
     grid-template-columns: repeat(2, 1fr);
+    margin-top: 20px;
   }
 
   .inicio-plus {
@@ -368,7 +394,7 @@
   }
 
   .inicio-hero__saludo {
-    font-size: 1.6rem;
+    font-size: 1.7rem;
   }
 
   .inicio-accesos {
