@@ -186,16 +186,23 @@
   font-weight: 600;
 }
 
-.status--available {
-  color: #c97136; /* Color naranja de la imagen */
-  border-color: #f5d6c6;
-  background: #fff8f5;
+/* Modo de venta (lib/modos.ts): un color por modo para distinguirlos de un vistazo. */
+.status--subasta {
+  color: var(--blue);
+  border-color: #c9dcee;
+  background: #eef4fa;
 }
 
-.status--pending {
-  color: #a36137;
-  border-color: #e8cbbc;
-  background: #fdf6f2;
+.status--precio_fijo {
+  color: #15803d;
+  border-color: #bbe5c9;
+  background: #effaf3;
+}
+
+.status--mixto {
+  color: var(--gold-dark);
+  border-color: #f1dca6;
+  background: #fdf6e3;
 }
 
 .catalog-card__title {

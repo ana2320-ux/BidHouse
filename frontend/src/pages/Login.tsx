@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { guardarSesion, type RespuestaLogin } from '../lib/sesion';
 import './Login.css';
@@ -15,6 +15,9 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  // Si llegó desde otra página (ej. "Inicia sesión para pujar" en un activo),
+  // esa página viene en el state como "desde" y se vuelve ahí al entrar.
+  const destino = (useLocation().state as { desde?: string } | null)?.desde ?? '/';
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,7 +57,7 @@ export default function Login() {
         // falla XSS, el token queda expuesto (la alternativa segura es una
         // cookie httpOnly puesta por el backend).
         guardarSesion(sesion);
-        navigate('/');
+        navigate(destino);
       }
     } catch (err) {
       setError(err instanceof ApiError

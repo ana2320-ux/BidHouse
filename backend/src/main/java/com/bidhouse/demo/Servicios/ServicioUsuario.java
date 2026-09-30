@@ -1,6 +1,5 @@
 package com.bidhouse.demo.Servicios;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -136,21 +135,11 @@ public class ServicioUsuario {
     // Se guarda en el bucket público "avatares" como <id>/avatar (siempre el
     // mismo nombre: al cambiarla se reemplaza y no quedan fotos viejas huérfanas).
     public Map<String, Object> cambiarFoto(String id, MultipartFile foto) {
-        if (foto == null || foto.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No llegó ninguna foto");
-        }
-        byte[] bytes;
-        try {
-            bytes = foto.getBytes();
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pudo leer la foto", e);
-        }
-        String tipo = Imagenes.tipo(bytes);
-        if (tipo == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La foto debe ser JPG, PNG o WEBP");
-        }
+        // 2 MB: el límite del bucket "avatares". Se revisa aquí para responder un
+        // 400 claro en vez del error que daría Storage.
+        Imagenes.Imagen imagen = Imagenes.leer(foto, 2 * 1024 * 1024);
 
-        String url = db.subirArchivoPublico("avatares", id, "avatar", bytes, tipo);
+        String url = db.subirArchivoPublico("avatares", id, "avatar", imagen.bytes(), imagen.tipo());
         // ?v=<hora> cambia la URL en cada subida. Sin esto el navegador seguiría
         // mostrando la foto vieja que tiene guardada en caché (la ruta es la misma).
         String urlVersionada = url + "?v=" + System.currentTimeMillis();
@@ -199,15 +188,25 @@ public class ServicioUsuario {
                 // el segundo queda "adjunto" al primero para poder diagnosticarlo.
                 e.addSuppressed(alBorrar);
             }
-            // 409 Conflict de PostgREST = choca con una restricción UNIQUE (ej. el email).
+            // 409 Conflict de PostgREST = choca con una restricción UNIQUE. En
+            // "usuarios" son únicos el email y el documento de identidad.
             if (e instanceof RestClientResponseException r && r.getStatusCode().value() == 409) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo.", e);
+                throw new ResponseStatusException(HttpStatus.CONFLICT, mensajeDuplicado(r.getResponseBodyAsString()), e);
             }
             throw e;
         }
 
         // Solo se devuelve lo necesario para confirmar; nunca la contraseña.
         return Map.of("id", id, "email", email);
+    }
+
+    // PostgREST dice qué columna chocó: {"details":"Key (documento_identidad)=(999) already exists."}.
+    // Sin esto, alguien con un documento ya registrado leería que el problema es su correo.
+    static String mensajeDuplicado(String cuerpoError) {
+        if (cuerpoError != null && cuerpoError.contains("documento_identidad")) {
+            return "Ya existe una cuenta con ese documento de identidad.";
+        }
+        return "Ya existe una cuenta con ese correo.";
     }
 
     // ── Login, paso 1: ¿el correo ya tiene cuenta? ──

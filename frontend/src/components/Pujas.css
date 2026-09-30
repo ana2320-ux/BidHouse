@@ -1,0 +1,186 @@
+/* ── Panel para pujar (dentro de la tarjeta de valoración del detalle) ── */
+.puja-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.puja-panel__resumen {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--gray-mid);
+}
+
+.puja-panel__nota {
+  font-size: 0.85rem;
+  color: var(--gray-mid);
+}
+
+.puja-panel__estado {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--gray-light);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.puja-panel__estado--ganando {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.puja-panel__estado--cerrada {
+  color: var(--gray-mid);
+}
+
+.puja-panel__form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Campo arriba y botón abajo, los dos a todo el ancho. En una sola fila el
+   botón (.detail-button--primary trae width: 100%) aplastaba el campo hasta
+   dejar solo sus flechitas. */
+.puja-panel__fila {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.puja-panel__fila input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.puja-panel__fila input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.12);
+}
+
+.puja-panel__fila .detail-button {
+  margin-top: 0; /* .detail-button--primary trae margin-top: 12px */
+}
+
+/* Sin las flechitas de subir/bajar del campo numérico: para montos grandes no
+   sirven (suben de a 1) y se ven como un botón extra. */
+.puja-panel__fila input::-webkit-outer-spin-button,
+.puja-panel__fila input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.puja-panel__fila input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.puja-panel__confirmar {
+  padding: 14px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background: #fffaf0;
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.puja-panel__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Aquí el botón principal va junto a "Cancelar": que no ocupe todo el ancho. */
+.puja-panel__acciones .detail-button {
+  width: auto;
+  margin-top: 0;
+  padding: 0 18px;
+}
+
+.puja-panel__error,
+.puja-panel__exito {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.puja-panel__error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.puja-panel__exito {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* ── Historial de pujas ── */
+.pujas-historial__vacio {
+  font-size: 0.88rem;
+  color: var(--gray-mid);
+}
+
+.pujas-historial__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pujas-historial__item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--gray-light);
+  font-size: 0.88rem;
+}
+
+.pujas-historial__item--mia {
+  background: #e8f0f8;
+}
+
+.pujas-historial__quien {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.pujas-historial__lider {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fdf3da;
+  color: var(--gold-dark);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pujas-historial__cuando {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+}
+
+/* "Cómpralo ya" del mixto: secundario pero a todo el ancho, debajo de pujar. */
+.puja-panel__comprar {
+  width: 100%;
+}

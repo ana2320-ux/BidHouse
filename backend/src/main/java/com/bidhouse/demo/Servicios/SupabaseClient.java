@@ -84,6 +84,18 @@ public class SupabaseClient {
                 .toBodilessEntity();
     }
 
+    // Llama una función de Postgres (POST /rest/v1/rpc/<nombre>). Los parámetros
+    // van en un JSON con los mismos nombres que en la función (p_subasta_id, ...).
+    // Todo lo que hace la función corre en una sola transacción de la BD.
+    public Map<String, Object> llamarFuncion(String nombre, Map<String, Object> parametros) {
+        return rest.post()
+                .uri("/rpc/{nombre}", nombre)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(parametros)
+                .retrieve()
+                .body(OBJETO);
+    }
+
     // ── Archivos (Storage) ──
 
     // Sube (o reemplaza, por x-upsert) bucket/carpeta/archivo y devuelve su URL

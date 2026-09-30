@@ -1,5 +1,11 @@
 package com.bidhouse.demo.Servicios;
 
+import java.io.IOException;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
 // Reconoce el tipo real de una imagen por sus primeros bytes ("firma" o
 // "magic number"), sin confiar en el nombre del archivo ni en el Content-Type
 // que manda el navegador: esos los controla quien sube el archivo.
@@ -8,6 +14,34 @@ package com.bidhouse.demo.Servicios;
 public final class Imagenes {
 
     private Imagenes() {
+    }
+
+    // Una imagen ya revisada: sus bytes y su tipo real.
+    public record Imagen(byte[] bytes, String tipo) {
+    }
+
+    // Lee un archivo subido y lo rechaza (400) si no llegó, si pesa más de
+    // maxBytes o si no es JPG/PNG/WEBP de verdad. Lo usan la foto de perfil y
+    // la imagen de los activos, cada una con su propio límite de tamaño.
+    public static Imagen leer(MultipartFile archivo, long maxBytes) {
+        if (archivo == null || archivo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No llegó ninguna imagen");
+        }
+        if (archivo.getSize() > maxBytes) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La imagen no puede pesar más de " + (maxBytes / (1024 * 1024)) + " MB");
+        }
+        byte[] bytes;
+        try {
+            bytes = archivo.getBytes();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pudo leer la imagen", e);
+        }
+        String tipo = tipo(bytes);
+        if (tipo == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La imagen debe ser JPG, PNG o WEBP");
+        }
+        return new Imagen(bytes, tipo);
     }
 
     // Devuelve "image/jpeg", "image/png" o "image/webp"; null si no es ninguna.
