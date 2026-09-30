@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
 import { leerSesion } from '../lib/sesion';
+import { SaldoCuenta } from '../components/SaldoCuenta';
 import './Perfil.css';
 
 // Forma de la respuesta de GET /api/usuarios/perfil (ver ServicioUsuario.perfil()).
@@ -142,6 +143,9 @@ function PerfilConSesion() {
       </section>
 
       {/* ── Contenido principal: dos columnas ── */}
+      {/* ── Saldo de BidHouse: recargar con Mercado Pago y ver el extracto ── */}
+      <SaldoCuenta />
+
       <section className="profile-dashboard">
         {/* Columna izquierda: resumen de lo publicado (sin cambios) */}
         <div className="dashboard-col">

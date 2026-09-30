@@ -1,0 +1,65 @@
+.retorno {
+  min-height: calc(100vh - 61px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  background: var(--gray-light);
+}
+
+.retorno__card {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 36px 32px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--white);
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.retorno__card h1 {
+  font-size: 1.5rem;
+}
+
+.retorno__card p {
+  font-size: 0.92rem;
+  color: var(--gray-mid);
+  line-height: 1.55;
+}
+
+.retorno__icono {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gray-light);
+  font-size: 1.8rem;
+  color: var(--ink);
+}
+
+.retorno__icono--ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.retorno__icono--girando {
+  animation: retorno-giro 1s linear infinite;
+}
+
+@keyframes retorno-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.retorno__boton {
+  margin-top: 8px;
+  border-radius: 10px;
+}

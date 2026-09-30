@@ -1,0 +1,150 @@
+/* ── Saldo de BidHouse (en el perfil) ── */
+.saldo {
+  margin-bottom: 56px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.saldo__cifras {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.saldo__por-liberar {
+  color: var(--gray-mid);
+}
+
+.saldo__accion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.saldo__recargar {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.saldo__ayuda {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+}
+
+.saldo__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.saldo__form label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-mid);
+}
+
+.saldo__form input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+}
+
+.saldo__form input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.12);
+}
+
+.saldo__botones {
+  display: flex;
+  gap: 8px;
+}
+
+.saldo__botones .saldo__recargar {
+  flex: 1;
+}
+
+.saldo__cancelar {
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+}
+
+.saldo__error {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+}
+
+.saldo__movimientos {
+  margin: 20px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.saldo__movimientos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.88rem;
+}
+
+.saldo__movimientos small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--gray-mid);
+}
+
+.saldo__entra {
+  color: #15803d;
+}
+
+.saldo__sale {
+  color: var(--ink);
+}
+
+@media (max-width: 800px) {
+  .saldo__cifras {
+    grid-template-columns: 1fr;
+  }
+}
+
+.saldo__verificar {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--blue);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.saldo__verificar:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.saldo__aviso {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.85rem;
+}

@@ -1,0 +1,131 @@
+/* ── Pago del contrato de garantía (en el panel del detalle) ── */
+.pago-contrato {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  background: #fffaf0;
+}
+
+.pago-contrato__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.pago-contrato__cabecera strong {
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.pago-contrato__cabecera span,
+.pago-contrato__nota {
+  font-size: 0.8rem;
+  color: var(--gray-mid);
+  line-height: 1.45;
+}
+
+.pago-contrato__nota a {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.pago-contrato__opciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pago-contrato__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  text-align: left;
+  font-family: var(--font-sans);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pago-contrato__opcion:hover:not(:disabled) {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.1);
+}
+
+.pago-contrato__opcion:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pago-contrato__opcion strong {
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.pago-contrato__opcion span {
+  font-size: 0.75rem;
+  color: var(--gray-mid);
+}
+
+.pago-contrato__confirmar p {
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.pago-contrato__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pago-contrato__acciones .detail-button {
+  width: auto;
+  margin-top: 0;
+  padding: 0 18px;
+}
+
+.pago-contrato__error {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.85rem;
+}
+
+.pago-contrato__estado {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #e8f0f8;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+@media (max-width: 520px) {
+  .pago-contrato__opciones {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pago-contrato__verificar {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--blue);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pago-contrato__verificar:hover:not(:disabled) {
+  text-decoration: underline;
+}

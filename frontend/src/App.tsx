@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Vender from './pages/Vender.tsx';
 import DetalleActivo from './pages/DetalleActivo';
 import VerificacionKYC from './pages/VerificacionKYC';
+import RetornoPago from './pages/RetornoPago';
 
 
 // Pantallas de acceso a pantalla completa (estilo Amazon): sin navbar para
@@ -33,6 +34,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/vender" element={<Vender />} />
+        {/* Vuelta desde Mercado Pago ("Volver al sitio") */}
+        <Route path="/pagos/retorno" element={<RetornoPago />} />
       </Routes>
     </div>
   );

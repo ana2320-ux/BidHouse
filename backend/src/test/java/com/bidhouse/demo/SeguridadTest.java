@@ -50,6 +50,29 @@ class SeguridadTest {
     }
 
     @Test
+    void losPagosExigenToken() throws Exception {
+        mvc.perform(get("/api/pagos/saldo")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/pagos/recargas").contentType(MediaType.APPLICATION_JSON).content("{\"monto\":5000}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/pagos/confirmar").contentType(MediaType.APPLICATION_JSON).content("{\"idPago\":\"1\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void conTokenSeRechazaUnaRecargaFueraDeRango() throws Exception {
+        mvc.perform(post("/api/pagos/recargas").with(jwt().jwt(j -> j.subject("u-1")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"monto\":10}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void conTokenSeRechazaUnIdDePagoQueNoEsNumero() throws Exception {
+        mvc.perform(post("/api/pagos/confirmar").with(jwt().jwt(j -> j.subject("u-1")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"idPago\":\"abc/../x\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void comprarSinTokenDa401() throws Exception {
         mvc.perform(post("/api/subastas/00000000-0000-0000-0000-000000000000/compra"))
                 .andExpect(status().isUnauthorized());
