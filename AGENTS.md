@@ -22,6 +22,7 @@ login y perfil propio: el backend identifica al usuario por su token.
 ```
 backend/    Spring Boot 4.1.1 · Java 21 · Maven
 frontend/   React 19 · Vite 8 · TypeScript · React Router 7 · Supabase JS
+blockchain/ Contrato Solidity (RegistroBidHouse) + scripts bun para compilar y desplegar en Sepolia
 docs/       Documentación de la materia (PDF)
 ```
 
@@ -88,7 +89,7 @@ son strings y no van a fallar al compilar.
 
 Los cambios que hicimos nosotros al esquema (columnas, funciones de Postgres)
 quedan como scripts en `backend/sql/`, para correrlos en el SQL Editor en orden
-(`fase1_pujas.sql`, `fase2_cierre.sql`, `fase3_compra.sql`, `fase4_pagos.sql`, `fase4b_entrega.sql`, ...). El backend no puede hacer DDL por
+(`fase1_pujas.sql`, `fase2_cierre.sql`, `fase3_compra.sql`, `fase4_pagos.sql`, `fase4b_entrega.sql`, `fase4c_blockchain.sql`, ...). El backend no puede hacer DDL por
 la API.
 
 **`CHECK` que existen en la BD** (descubiertos probando; no se ven desde la API):
@@ -180,6 +181,20 @@ la API.
   enviar en 5 días → `cancelada` y reembolso al saldo del comprador; sin
   confirmar en 7 días → se libera solo. Las disputas quedan en `en_disputa`
   con el motivo en `notas`; todavía no hay quién las resuelva.
+- **Blockchain (fase 4c).** `blockchain/contratos/RegistroBidHouse.sol` es UN
+  contrato en Sepolia que registra todos los acuerdos: no guarda dinero, guarda
+  cada hito (pago, envío, liberación, cancelación, disputa) y la regla de
+  liberación (solo si el comprador confirmó o, enviado, pasó el plazo). Solo el
+  operador (la billetera del backend) escribe. Scripts en `blockchain/`
+  (`bun run compilar | billetera | desplegar | verificar <id>`; `verificar` lee
+  el estado de un acuerdo directo de la red, sin pasar por el backend): la billetera y la dirección del
+  contrato quedan en `backend/.env` y el ABI en
+  `backend/src/main/resources/blockchain/`. `Servicios/SincronizadorBlockchain`
+  (cada minuto) compara los contratos de la BD con `hitos_blockchain` y manda
+  en orden los hitos que faltan (`Servicios/RegistroBlockchain`, con web3j);
+  si una transacción falla, reintenta en la siguiente vuelta. El detalle
+  muestra cada hito con su enlace a Etherscan. En la cadena no va ningún dato
+  personal: el id es un hash del id del contrato y los datos van como "huella".
 - **Moneda del demo:** el sitio muestra USD y Mercado Pago (cuenta de Colombia)
   cobra en COP el mismo número, redondeado a pesos (`MercadoPagoClient.aPesos()`).
   Una recarga de 50.000 COP suma 50.000 USD de saldo.
@@ -212,7 +227,7 @@ Distingue lo que ya funciona de lo que es fachada:
 | `Vender.tsx` | **Real** (`POST /api/subastas`), exige sesión. Elige el modo (subasta, precio fijo, mixto); el backend lo guarda como `permite_pujas` + `precio_compra_inmediata` (`NuevaSubasta.modoEfectivo()`). Publica directo como `activa` y lleva al detalle. Inserta en `activos` y luego en `subastas`, sin transacción. |
 | `Home.tsx` | Sin sesión, home público estático; con sesión delega en `HomeUsuario`. |
 | `ComoFunciona.tsx` | Contenido estático, está bien así. |
-| Pagos y entrega | **Fases 4a y 4b:** pagar con saldo o Mercado Pago, marcar envío, confirmar recepción o reportar problema, todo desde el detalle del activo (`components/PagoContrato.tsx`); recargar saldo y ver el extracto en el perfil (`components/SaldoCuenta.tsx`); retorno en `RetornoPago.tsx`. Falta 4c (contrato en blockchain) y resolver disputas. Las notificaciones se guardan pero no hay pantalla que las muestre. |
+| Pagos y entrega | **Fases 4a, 4b y 4c:** pagar con saldo o Mercado Pago, marcar envío, confirmar recepción o reportar problema, todo desde el detalle del activo (`components/PagoContrato.tsx`); recargar saldo y ver el extracto en el perfil (`components/SaldoCuenta.tsx`); retorno en `RetornoPago.tsx`; hitos en blockchain con enlace a Etherscan. Falta resolver disputas. Las notificaciones se guardan pero no hay pantalla que las muestre. |
 
 ## Decisión de arquitectura: modelo B
 
@@ -318,6 +333,14 @@ Acordadas con el equipo; todavía no están implementadas.
   `/pagos/retorno`.
 - `MERCADOPAGO_ACCESS_TOKEN` puede faltar en `backend/.env`: la app arranca y
   solo fallan los pagos (503 con mensaje claro).
+- Las variables `BLOCKCHAIN_*` también pueden faltar: sin ellas no se registra
+  nada en la cadena. **Solo UN backend del equipo debe tenerlas**: dos backends
+  firmando con la misma billetera chocan (mismo nonce). La billetera se queda
+  sin ETH de prueba con el uso; se recarga en un faucet de Sepolia.
+- En la cadena, una transacción con precio de gas bajo la tarifa base queda
+  atascada y bloquea las siguientes de esa billetera (van en orden por nonce).
+  `RegistroBlockchain` ofrece el doble de la tarifa y usa el nonce confirmado,
+  así una atascada se reemplaza sola en el siguiente intento.
 - `frontend/package-lock.json` y un `package-lock.json` vacío en la raíz
   están versionados por accidente; el lockfile real es `bun.lock`.
 

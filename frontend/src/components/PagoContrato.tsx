@@ -16,8 +16,26 @@ export interface MiContrato {
   fecha_limite_confirmacion?: string | null;
   liberado_en?: string | null;
   notas?: string | null;           // motivo de la disputa o de la cancelación
+  hitos_blockchain?: HitoBlockchain[];
   rol: 'comprador' | 'vendedor';
 }
+
+// Un hito registrado en el contrato RegistroBidHouse de Sepolia (fase 4c).
+interface HitoBlockchain {
+  hito: 'pago' | 'envio' | 'liberacion' | 'cancelacion' | 'disputa';
+  tx_hash: string;
+  creado_en: string;
+}
+
+const NOMBRE_HITO: Record<HitoBlockchain['hito'], string> = {
+  pago: 'Pago en custodia',
+  envio: 'Envío',
+  liberacion: 'Pago liberado',
+  cancelacion: 'Cancelación',
+  disputa: 'Disputa',
+};
+
+const ORDEN_HITOS: HitoBlockchain['hito'][] = ['pago', 'envio', 'liberacion', 'cancelacion', 'disputa'];
 
 const fechaCorta = (valor?: string | null) =>
   valor ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(valor)) : '';
@@ -28,6 +46,46 @@ const fechaCorta = (valor?: string | null) =>
 // Las acciones: el comprador paga, el vendedor marca el envío, el comprador
 // confirma que le llegó (eso libera el pago) o reporta un problema.
 export function PagoContrato({ contrato, alPagar }: { contrato: MiContrato; alPagar: () => void }) {
+  return (
+    <>
+      <EtapaContrato contrato={contrato} alPagar={alPagar} />
+      <HitosBlockchain contrato={contrato} />
+    </>
+  );
+}
+
+// ── Registro público en blockchain ──
+// Cada hito del contrato queda como una transacción en Sepolia; se enlaza a
+// Etherscan para que cualquiera pueda verificarlo. El backend los registra
+// en segundo plano (SincronizadorBlockchain), así que tardan hasta ~1 minuto.
+function HitosBlockchain({ contrato }: { contrato: MiContrato }) {
+  const hitos = [...(contrato.hitos_blockchain ?? [])]
+    .sort((a, b) => ORDEN_HITOS.indexOf(a.hito) - ORDEN_HITOS.indexOf(b.hito));
+  const pagado = contrato.estado !== 'pendiente';
+  if (!pagado) return null;
+
+  return (
+    <div className="hitos-blockchain">
+      <span className="hitos-blockchain__titulo">🔗 Registro público en blockchain (Sepolia)</span>
+      {hitos.length === 0 ? (
+        <span className="hitos-blockchain__pendiente">Registrando en la red… puede tardar hasta un minuto.</span>
+      ) : (
+        <ol>
+          {hitos.map((h) => (
+            <li key={h.hito}>
+              <span>✓ {NOMBRE_HITO[h.hito] ?? h.hito}</span>
+              <a href={`https://sepolia.etherscan.io/tx/${h.tx_hash}`} target="_blank" rel="noreferrer">
+                Ver transacción ↗
+              </a>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+function EtapaContrato({ contrato, alPagar }: { contrato: MiContrato; alPagar: () => void }) {
   const { rol, estado } = contrato;
   const neto = contrato.monto - (contrato.comision_plataforma ?? 0);
 
