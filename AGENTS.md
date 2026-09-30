@@ -14,8 +14,8 @@ liquidación vía contratos inteligentes.
 
 Proyecto académico (Innovación, semestre 2026-03). Está en fase temprana: la
 base de datos vive en Supabase (Postgres), parte de la interfaz ya consume
-datos reales y otra parte sigue maquetada con datos quemados. Ya hay registro
-y login, pero el resto del backend todavía no usa el token de sesión.
+datos reales y otra parte sigue maquetada con datos quemados. Ya hay registro,
+login y perfil propio: el backend identifica al usuario por su token.
 
 ## Estructura
 
@@ -89,14 +89,23 @@ son strings y no van a fallar al compilar.
 - **Backend como proxy de Supabase.** `Servicios/SupabaseClient` tiene tres
   `RestClient`: `/rest/v1` (tablas, con `SUPABASE_SECRET_KEY`, se salta RLS),
   `/auth/v1` (registro y login, con la llave pública, igual que haría el navegador) y
-  `/auth/v1/admin` (borrar cuentas, con la *service_role*). Los servicios arman la
+  `/auth/v1/admin` (borrar cuentas, con la *service_role*), más `/storage/v1`
+  (archivos, con la *service_role*). Los servicios arman la
   consulta como string de PostgREST, incluidas relaciones embebidas
   (`activos(nombre,categorias(nombre))`), y devuelven `Map<String, Object>` tal
   cual: no hay DTOs de salida, así que el JSON que ve el front usa los nombres
   de columna en `snake_case`.
-- **Usuario actual fijo.** Sin login, `ServicioUsuario.usuarioActual()` busca el
-  email de `bidhouse.usuario-actual-email` en `application.properties`. Todo lo
-  que "es del usuario" (perfil, vender) cuelga de ahí.
+- **Autenticación.** `Config/SeguridadConfig` (Spring Security, resource
+  server) valida el `Authorization: Bearer <jwt>` contra `SUPABASE_JWKS_URL`.
+  Supabase firma con **ES256** (hay que declararlo: el default de Spring es
+  RS256) y se validan también `iss` y `aud=authenticated`. Rutas públicas: GET
+  de catálogo/categorías/status y POST de registro/existe/login; todo lo demás
+  exige token. Los controladores reciben `@AuthenticationPrincipal Jwt` y pasan
+  `jwt.getSubject()` (el id del usuario) al servicio.
+- **Archivos.** Fotos de perfil en el bucket público `avatares` de Storage
+  (máx. 2 MB, jpg/png/webp), ruta `<id>/avatar` con upsert; la URL (con
+  `?v=<hora>` para romper caché) va en `usuarios.imagen_url`. El tipo se valida
+  por los bytes (`Servicios/Imagenes`), no por el nombre ni el Content-Type.
 - **Errores.** Validación con `ResponseStatusException` (ver
   `NuevaSubasta.validar()`) y `spring.mvc.problemdetails.enabled=true`, así que
   la respuesta es un Problem Detail. El helper `frontend/src/api.ts` lee su
@@ -106,8 +115,10 @@ son strings y no van a fallar al compilar.
   (el `sub` del JWT). No hay trigger en la BD que haga esto: si creas cuentas
   por otro lado, la fila de `usuarios` no aparece. Si el insert falla, se borra
   la cuenta (compensación, no hay transacción entre las dos APIs).
-- **Front.** Todas las llamadas al backend pasan por `api()` en `src/api.ts`.
-  Ninguna página usa ya `src/lib/supabaseClient.ts`.
+- **Front.** Todas las llamadas al backend pasan por `api()` en `src/api.ts`,
+  que agrega el token si hay sesión y, ante un 401 con `WWW-Authenticate`
+  (token inválido o vencido), borra la sesión. Ninguna página usa ya
+  `src/lib/supabaseClient.ts`.
 
 ## Estado real del código
 
@@ -119,7 +130,7 @@ Distingue lo que ya funciona de lo que es fachada:
 | `Navbar.tsx` | Con sesión muestra el nombre y un menú (Mi perfil, Vender, Cerrar sesión). |
 | `HomeUsuario.tsx` | Home con sesión (estilo Mercado Libre): saludo, categorías con fotos (tomadas de sus activos, porque `categorias.imagen_url` está vacía), accesos "Mis pujas"/"Mis ventas" que por ahora solo enlazan, y vitrina de servicios (destacar, peritaje, BidHouse Plus 3% → 1%) sin implementar. |
 | `Registro.tsx` | **Real** (`POST /api/usuarios/registro`). El proyecto tiene la confirmación de correo desactivada: la cuenta queda activa al crearse. Hay 2 cuentas viejas creadas desde el navegador que no tienen fila en `usuarios`. |
-| `Perfil.tsx` | **Real**, pero siempre del usuario fijo por config. Métricas calculadas en `ServicioUsuario.perfil()`. |
+| `Perfil.tsx` | **Real y propio** (sin sesión redirige a `/login`). Foto (`POST /api/usuarios/perfil/foto`) y descripción (`PATCH /api/usuarios/perfil`). Los botones "Ver subastas activas / mis ofertas / contratos" están deshabilitados: sus pantallas no existen. "Transacciones recientes" muestra etapas del escrow cuyos estados intermedios son supuestos. |
 | `Catalogo.tsx` | **Real** (`GET /api/subastas`, `/api/categorias`). Los filtros por categoría funcionan; el buscador no está conectado. |
 | `DetalleActivo.tsx` | **Real** (`GET /api/subastas/{id}`). |
 | `Vender.tsx` | **Real** (`POST /api/subastas`): inserta en `activos` y luego en `subastas`, sin transacción. |
@@ -133,9 +144,8 @@ El equipo eligió que **todo pase por Spring Boot**: el front nunca habla direct
 con Supabase y el backend es el único que tiene las llaves. El registro ya
 sigue este modelo.
 
-Registro y login ya lo siguen. Lo que falta para cumplirlo del todo: que el
-front mande el token en cada pedido y que el backend lo valide contra
-`SUPABASE_JWKS_URL` para reemplazar el usuario fijo por config.
+Registro, login, perfil y vender ya lo siguen: el front manda el token y el
+backend lo valida.
 
 ---
 
@@ -184,10 +194,12 @@ front mande el token en cada pedido y que el backend lo valide contra
 - El Navbar y el Home leen la sesión en cada dibujo; se actualizan solos porque
   `App` se vuelve a dibujar en cada cambio de URL. Si cambias la sesión sin
   navegar, no se enteran.
-- "Mi perfil" del menú todavía muestra al usuario fijo del backend, no al que
-  inició sesión.
-- El backend no tiene autenticación y usa la *service_role*: cualquiera que
-  llegue a `:8080` puede crear subastas a nombre del usuario fijo.
+- La columna `usuarios.descripcion` ya existe
+  descripcion text;`). Mientras falte, `PATCH /api/usuarios/perfil` responde 503.
+- `registrar()` guarda `esta_verificado = true` a toda cuenta nueva (commit
+  "Rgistro"), así que hoy todos aparecen como verificados.
+- El CORS permite `GET`/`POST`/`PATCH` y expone `WWW-Authenticate`; sin eso el
+  front no puede distinguir "token vencido" de otros 401.
 - `frontend/package-lock.json` y un `package-lock.json` vacío en la raíz
   están versionados por accidente; el lockfile real es `bun.lock`.
 
@@ -195,10 +207,9 @@ front mande el token en cada pedido y que el backend lo valide contra
 
 Si vas a trabajar en algo, probablemente esté acá:
 
-1. Usar la sesión en el backend: `api.ts` manda `Authorization: Bearer
-   <accessToken>`, el backend valida el JWT y reemplaza el usuario fijo por
-   config; renovar el token con el `refreshToken` (dura 1 h). Con eso, llenar
-   "Mis pujas"/"Mis ventas" del home con datos reales.
+1. Renovar el token con el `refreshToken` antes de que venza (dura 1 h).
+   Llenar "Mis pujas"/"Mis ventas" del home y las pantallas de "Ver subastas
+   activas", "Ver mis ofertas" y "Ver contratos" del perfil.
 2. Borrar las 2 cuentas viejas de Auth sin fila en `usuarios`: `/existe` dice
    que no existen y el registro les responde 409.
 3. Conectar el buscador del catálogo y el home a datos reales.

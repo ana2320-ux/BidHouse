@@ -218,3 +218,267 @@
     grid-template-columns: 1fr;
   }
 }
+/* ── Foto de perfil con botón de cámara ── */
+.perfil-foto {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.perfil-foto__iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue-dark);
+  color: var(--white);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.perfil-foto__boton {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--blue-dark);
+  box-shadow: 0 2px 6px rgba(20, 35, 53, 0.2);
+}
+
+.perfil-foto__boton:hover:not(:disabled) {
+  background: var(--gold-dark);
+}
+
+.perfil-foto__error {
+  margin-top: 6px;
+  max-width: 260px;
+  font-size: 0.78rem;
+  color: #b42318;
+}
+
+/* Texto solo para lectores de pantalla (el botón muestra un ícono). */
+.sr-solo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Descripción ── */
+.perfil-descripcion {
+  margin-top: 10px;
+  max-width: 520px;
+}
+
+.perfil-descripcion__texto {
+  color: var(--ink) !important;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.perfil-descripcion__vacia {
+  font-style: italic;
+  font-size: 0.88rem;
+}
+
+.perfil-descripcion__editar {
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--blue);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.perfil-descripcion__editar:hover {
+  text-decoration: underline;
+}
+
+.perfil-descripcion--editando textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.perfil-descripcion--editando textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(24, 94, 148, 0.12);
+}
+
+.perfil-descripcion__acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.perfil-descripcion__contador {
+  margin-right: auto;
+  font-size: 0.75rem;
+  color: var(--gray-mid);
+}
+
+.perfil-descripcion__cancelar,
+.perfil-descripcion__guardar {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.perfil-descripcion__cancelar {
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--ink);
+}
+
+.perfil-descripcion__guardar {
+  border: none;
+  background: var(--blue-dark);
+  color: var(--white);
+}
+
+/* ── Botón al pie de cada tarjeta de métricas ── */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card__boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: auto;   /* lo empuja al fondo aunque las tarjetas tengan textos de distinto largo */
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--gray-light);
+  color: var(--blue);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.stat-card .stat-desc {
+  margin-bottom: 16px;
+}
+
+.stat-card__boton:disabled {
+  cursor: not-allowed;
+  color: var(--gray-mid);
+}
+
+.stat-card__pronto {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fdf3da;
+  color: var(--gold-dark);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Transacciones recientes: resumen por etapas ── */
+.contratos-etapas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.contratos-etapa {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  text-align: center;
+}
+
+.contratos-etapa--activa {
+  border-color: var(--gold);
+  background: #fffaf0;
+}
+
+.contratos-etapa__numero {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--gray-mid);
+}
+
+.contratos-etapa--activa .contratos-etapa__numero {
+  color: var(--blue-dark);
+}
+
+.contratos-etapa__nombre {
+  font-size: 0.7rem;
+  color: var(--gray-mid);
+  line-height: 1.2;
+}
+
+.contratos-etapa__flecha {
+  position: absolute;
+  right: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--gray-mid);
+  z-index: 1;
+}
+
+.contratos-vacio {
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* Barra de 5 segmentos: los hechos en dorado. */
+.contrato__progreso {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.contrato__paso {
+  width: 28px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.contrato__paso--hecho {
+  background: var(--gold);
+}
+
+@media (max-width: 800px) {
+  .profile-dashboard {
+    grid-template-columns: 1fr;
+  }
+}

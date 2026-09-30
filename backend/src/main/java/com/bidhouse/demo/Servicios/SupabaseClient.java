@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 //   /rest/v1        → PostgREST: las TABLAS (usuarios, subastas...).
 //   /auth/v1        → GoTrue: las CUENTAS (registro, login, contraseñas).
 //   /auth/v1/admin  → GoTrue en modo administrador (borrar cuentas, etc.).
+//   /storage/v1     → Storage: ARCHIVOS (fotos de perfil en el bucket "avatares").
 @Component
 public class SupabaseClient {
 
@@ -25,6 +26,8 @@ public class SupabaseClient {
     private final RestClient rest;      // tablas, con service_role (se salta RLS)
     private final RestClient auth;      // registro, con la llave PÚBLICA
     private final RestClient authAdmin; // administración de cuentas, con service_role
+    private final RestClient storage;   // archivos, con service_role
+    private final String url;
 
     public SupabaseClient(@Value("${supabase.url}") String url,
                           @Value("${supabase.secret-key}") String secretKey,
@@ -36,6 +39,8 @@ public class SupabaseClient {
         // Con la service_role habría que usar /admin/users, que se salta todo eso.
         this.auth = conLlave(url + "/auth/v1", publishableKey);
         this.authAdmin = conLlave(url + "/auth/v1/admin", secretKey);
+        this.storage = conLlave(url + "/storage/v1", secretKey);
+        this.url = url;
     }
 
     private static RestClient conLlave(String baseUrl, String llave) {
@@ -65,6 +70,35 @@ public class SupabaseClient {
 
     public void eliminar(String rutaYFiltros) {
         rest.delete().uri(rutaYFiltros).retrieve().toBodilessEntity();
+    }
+
+    // PATCH = cambiar SOLO las columnas que vienen en "cambios" de las filas que
+    // cumplan el filtro (UPDATE ... SET ... WHERE ...). Un Map (y no Map.of) para
+    // poder mandar null y así vaciar una columna.
+    public void actualizar(String rutaYFiltros, Map<String, Object> cambios) {
+        rest.patch()
+                .uri(rutaYFiltros)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(cambios)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    // ── Archivos (Storage) ──
+
+    // Sube (o reemplaza, por x-upsert) bucket/carpeta/archivo y devuelve su URL
+    // pública. Solo para buckets públicos: cualquiera con la URL puede verlo.
+    // Carpeta y archivo van como variables separadas porque Spring codifica
+    // cada variable entera: un "/" dentro de una sola variable llegaría como %2F.
+    public String subirArchivoPublico(String bucket, String carpeta, String archivo, byte[] contenido, String tipo) {
+        storage.post()
+                .uri("/object/{bucket}/{carpeta}/{archivo}", bucket, carpeta, archivo)
+                .header("x-upsert", "true")
+                .contentType(MediaType.parseMediaType(tipo))
+                .body(contenido)
+                .retrieve()
+                .toBodilessEntity();
+        return url + "/storage/v1/object/public/" + bucket + "/" + carpeta + "/" + archivo;
     }
 
     // ── Cuentas (Auth) ──

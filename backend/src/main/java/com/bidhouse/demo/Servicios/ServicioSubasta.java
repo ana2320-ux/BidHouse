@@ -56,9 +56,11 @@ public class ServicioSubasta {
     }
 
     // ponytail: dos inserts sin transacción (PostgREST); si falla el 2º se borra el activo a mano. Usar una función RPC en Postgres si hace falta atomicidad real.
-    public Map<String, Object> crear(NuevaSubasta n) {
+    // idUsuario viene del token (ver ControladorSubasta): se vende a nombre de
+    // quien inició sesión. usuarioActual() confirma que tenga fila en "usuarios".
+    public Map<String, Object> crear(NuevaSubasta n, String idUsuario) {
         n.validar();
-        String vendedorId = (String) usuarios.usuarioActual().get("id");
+        String vendedorId = (String) usuarios.usuarioActual(idUsuario).get("id");
         BigDecimal incremento = n.incrementoMinimo() == null ? BigDecimal.ZERO : n.incrementoMinimo();
         boolean hayImagen = n.imagenUrl() != null && !n.imagenUrl().isBlank();
 

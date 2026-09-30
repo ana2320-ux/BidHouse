@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,8 +39,8 @@ public class ControladorSubasta {
 
     @PostMapping("/subastas")
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Object> vender(@RequestBody NuevaSubasta nueva) {
-        return servicioSubasta.crear(nueva);
+    public Map<String, Object> vender(@AuthenticationPrincipal Jwt jwt, @RequestBody NuevaSubasta nueva) {
+        return servicioSubasta.crear(nueva, jwt.getSubject());
     }
 
     @GetMapping("/categorias")
