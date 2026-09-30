@@ -186,8 +186,9 @@ la API.
   cada hito (pago, envío, liberación, cancelación, disputa) y la regla de
   liberación (solo si el comprador confirmó o, enviado, pasó el plazo). Solo el
   operador (la billetera del backend) escribe. Scripts en `blockchain/`
-  (`bun run compilar | billetera | desplegar | verificar <id>`; `verificar` lee
-  el estado de un acuerdo directo de la red, sin pasar por el backend): la billetera y la dirección del
+  (`bun run compilar | billetera | desplegar | verificar [id...]`; `verificar`
+  lee de la red, sin pasar por el backend, el saldo de la billetera y todos los
+  acuerdos con sus hitos): la billetera y la dirección del
   contrato quedan en `backend/.env` y el ABI en
   `backend/src/main/resources/blockchain/`. `Servicios/SincronizadorBlockchain`
   (cada minuto) compara los contratos de la BD con `hitos_blockchain` y manda
