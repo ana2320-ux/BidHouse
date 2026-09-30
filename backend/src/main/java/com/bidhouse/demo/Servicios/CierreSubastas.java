@@ -45,4 +45,19 @@ public class CierreSubastas {
             log.warn("No se pudieron cerrar las subastas vencidas: {}", e.getMessage());
         }
     }
+
+    // Plazos de los contratos de garantía (backend/sql/fase4b_entrega.sql):
+    // sin pagar en 48 h → cancelado; sin enviar en 5 días → reembolso al
+    // comprador; sin confirmar en 7 días → se libera el pago al vendedor.
+    @Scheduled(initialDelay = 20_000, fixedDelay = 60_000)
+    public void procesarVencimientosContratos() {
+        try {
+            Map<String, Object> r = db.llamarFuncion("procesar_vencimientos_contratos", Map.of());
+            if (r.values().stream().anyMatch(v -> v instanceof Number n && n.intValue() > 0)) {
+                log.info("Contratos vencidos: {}", r);
+            }
+        } catch (RuntimeException e) {
+            log.warn("No se pudieron procesar los vencimientos de contratos: {}", e.getMessage());
+        }
+    }
 }

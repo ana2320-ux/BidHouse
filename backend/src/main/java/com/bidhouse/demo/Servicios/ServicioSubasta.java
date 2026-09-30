@@ -1,13 +1,11 @@
 package com.bidhouse.demo.Servicios;
 
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,7 +68,34 @@ public class ServicioSubasta {
                 decimal(detalle.get("oferta_actual_mas_alta")),
                 decimal(detalle.get("incremento_minimo")),
                 lider != null));
+
+        // Si ya se vendió o cerró con ganador, a comprador y vendedor se les
+        // muestra su contrato de garantía (para pagar o ver en qué va).
+        Object estado = detalle.get("estado");
+        if (idUsuario != null && ("finalizada".equals(estado) || "vendida".equals(estado))) {
+            detalle.put("miContrato", contratoDe(idNormalizado, idUsuario));
+        }
         return detalle;
+    }
+
+    private Map<String, Object> contratoDe(String idSubasta, String idUsuario) {
+        String consulta = "/transacciones?subasta_id=eq." + idSubasta
+                + "&or=(comprador_id.eq." + idUsuario + ",vendedor_id.eq." + idUsuario + ")"
+                + "&select=id,estado,monto,comision_plataforma,fecha_limite_pago,fecha_limite_envio,"
+                + "guia_envio,enviado_en,fecha_limite_confirmacion,liberado_en,notas,comprador_id";
+        List<Map<String, Object>> filas;
+        try {
+            // Con los hitos ya registrados en la blockchain, para "Ver en blockchain".
+            filas = db.consultar(consulta + ",hitos_blockchain(hito,tx_hash,creado_en)&order=creado_en.desc&limit=1");
+        } catch (RestClientResponseException e) {
+            // Si en esta BD todavía no se corrió fase4c_blockchain.sql, la tabla no
+            // existe: se muestra el contrato sin hitos en vez de romper el detalle.
+            filas = db.consultar(consulta + "&order=creado_en.desc&limit=1");
+        }
+        if (filas.isEmpty()) return null;
+        Map<String, Object> contrato = new LinkedHashMap<>(filas.get(0));
+        contrato.put("rol", idUsuario.equals(contrato.remove("comprador_id")) ? "comprador" : "vendedor");
+        return contrato;
     }
 
     // Misma regla que la función pujar() en la BD (backend/sql/fase1_pujas.sql).
@@ -157,72 +182,7 @@ public class ServicioSubasta {
 
     // Llama una función de la BD y convierte su error en uno con sentido para el front.
     private Map<String, Object> llamar(String funcion, Map<String, Object> parametros) {
-        try {
-            return db.llamarFuncion(funcion, parametros);
-        } catch (RestClientResponseException e) {
-            Map<?, ?> cuerpo;
-            try {
-                cuerpo = e.getResponseBodyAs(Map.class);
-            } catch (RuntimeException noEsJson) {
-                cuerpo = null;
-            }
-            throw errorDeBd(cuerpo, e);
-        }
-    }
-
-    // Traduce los errores de pujar() / comprar_ahora() (y de PostgREST) a un
-    // status y un mensaje en español. La BD responde { "code": "P0001",
-    // "message": "MONTO_INSUFICIENTE", "details": "1250000" }: el "message" es
-    // el código que lanzó la función.
-    static ResponseStatusException errorDeBd(Map<?, ?> cuerpo, Throwable causa) {
-        String codigo = cuerpo == null ? "" : String.valueOf(cuerpo.get("code"));
-        String mensaje = cuerpo == null ? "" : String.valueOf(cuerpo.get("message"));
-        String detalle = cuerpo == null ? "" : String.valueOf(cuerpo.get("details"));
-
-        if ("23503".equals(codigo)) { // llave foránea: el usuario no tiene fila en "usuarios"
-            return new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Tu cuenta no tiene un perfil asociado. Contacta a soporte.", causa);
-        }
-        if ("PGRST202".equals(codigo)) { // PostgREST no encuentra la función
-            return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Falta crear una función en la base de datos: corre los scripts de backend/sql/.", causa);
-        }
-
-        return switch (mensaje) {
-            case "MONTO_INSUFICIENTE" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Alguien ya ofreció más o no alcanzas el mínimo. La puja mínima ahora es " + usd(detalle) + ".");
-            case "MONTO_INVALIDO" -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El monto de la puja debe ser mayor a 0");
-            case "SUBASTA_NO_EXISTE" -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subasta no encontrada");
-            case "NO_PERMITE_PUJAS" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Esta publicación es de precio fijo: no recibe pujas.");
-            case "SUBASTA_NO_ACTIVA", "SUBASTA_NO_INICIADA" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Esta subasta todavía no está abierta a pujas.");
-            case "SUBASTA_CERRADA" -> new ResponseStatusException(HttpStatus.CONFLICT, "Esta subasta ya cerró.");
-            case "PUJA_PROPIA" -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "No puedes pujar en tu propia publicación.");
-            case "YA_VAS_GANANDO" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Ya tienes la puja más alta en esta subasta.");
-            // De comprar_ahora():
-            case "SIN_COMPRA_INMEDIATA" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Esta publicación es una subasta: solo se puede pujar.");
-            case "YA_VENDIDA" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Alguien ya compró este activo.");
-            case "YA_HAY_PUJAS" -> new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Ya hay pujas en esta subasta: \"Cómpralo ya\" dejó de estar disponible.");
-            case "COMPRA_PROPIA" -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "No puedes comprar tu propia publicación.");
-            default -> new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "No se pudo completar la operación. Intenta de nuevo.", causa);
-        };
-    }
-
-    private static String usd(String valor) {
-        try {
-            return "$" + NumberFormat.getNumberInstance(Locale.US).format(new BigDecimal(valor)) + " USD";
-        } catch (NumberFormatException e) {
-            return valor;
-        }
+        return FuncionesBd.llamar(db, funcion, parametros);
     }
 
     // PostgREST manda los números como Integer o Double según el caso; así se
