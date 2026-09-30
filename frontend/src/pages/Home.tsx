@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./Home.css";
 import { Link } from "react-router-dom";
+import { leerSesion } from "../lib/sesion";
+import HomeUsuario from "./HomeUsuario";
 
 // ---------- Datos de ejemplo (reemplazar por datos reales / API) ----------
 
@@ -132,6 +134,10 @@ function LotCard({ lot }: { lot: Lot }) {
 // ---------- Página ----------
 
 export default function Home() {
+  // Con sesión se muestra el home personalizado; sin sesión, el público.
+  const sesion = leerSesion();
+  if (sesion) return <HomeUsuario sesion={sesion} />;
+
   return (
     <div className="bh">
       

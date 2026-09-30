@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import './Catalogo.css';
 
@@ -28,7 +28,10 @@ const hashCorto = (id: string) => {
 export default function Catalogo() {
   const [subastas, setSubastas] = useState<Subasta[] | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [filtro, setFiltro] = useState(TODOS);
+  // ?categoria=Vehículos en la URL (lo usa el home al hacer clic en una
+  // categoría) deja el filtro elegido desde el principio.
+  const [params] = useSearchParams();
+  const [filtro, setFiltro] = useState(params.get('categoria') ?? TODOS);
   const [error, setError] = useState(false);
 
   useEffect(() => {

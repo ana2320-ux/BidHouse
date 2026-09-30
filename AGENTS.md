@@ -115,13 +115,15 @@ Distingue lo que ya funciona de lo que es fachada:
 
 | Zona | Estado |
 | --- | --- |
-| `Login.tsx` | **Real**, en dos pasos: `POST /api/usuarios/existe` (si el correo no tiene fila en `usuarios`, manda a `/registro`) y `POST /api/usuarios/login`. Guarda la sesión (tokens + usuario) en `localStorage['bh_sesion']`, pero nada la lee todavía. |
+| `Login.tsx` | **Real**, en dos pasos: `POST /api/usuarios/existe` (si el correo no tiene fila en `usuarios`, manda a `/registro`) y `POST /api/usuarios/login`. La sesión se guarda y se lee solo a través de `src/lib/sesion.ts` (vence a la hora; no se renueva). |
+| `Navbar.tsx` | Con sesión muestra el nombre y un menú (Mi perfil, Vender, Cerrar sesión). |
+| `HomeUsuario.tsx` | Home con sesión (estilo Mercado Libre): saludo, categorías con fotos (tomadas de sus activos, porque `categorias.imagen_url` está vacía), accesos "Mis pujas"/"Mis ventas" que por ahora solo enlazan, y vitrina de servicios (destacar, peritaje, BidHouse Plus 3% → 1%) sin implementar. |
 | `Registro.tsx` | **Real** (`POST /api/usuarios/registro`). El proyecto tiene la confirmación de correo desactivada: la cuenta queda activa al crearse. Hay 2 cuentas viejas creadas desde el navegador que no tienen fila en `usuarios`. |
 | `Perfil.tsx` | **Real**, pero siempre del usuario fijo por config. Métricas calculadas en `ServicioUsuario.perfil()`. |
 | `Catalogo.tsx` | **Real** (`GET /api/subastas`, `/api/categorias`). Los filtros por categoría funcionan; el buscador no está conectado. |
 | `DetalleActivo.tsx` | **Real** (`GET /api/subastas/{id}`). |
 | `Vender.tsx` | **Real** (`POST /api/subastas`): inserta en `activos` y luego en `subastas`, sin transacción. |
-| `Home.tsx` | Solo maqueta: arreglo `liveLots` en el archivo. |
+| `Home.tsx` | Sin sesión, home público estático; con sesión delega en `HomeUsuario`. |
 | `ComoFunciona.tsx` | Contenido estático, está bien así. |
 | Pujas, cierre de subasta, auth en el backend | No existen. |
 
@@ -179,6 +181,11 @@ front mande el token en cada pedido y que el backend lo valide contra
 - `api.ts` lee `VITE_API_URL` con fallback a `http://localhost:8080`, pero la
   variable no está en `frontend/.env.example`.
 - `/login` y `/registro` no muestran navbar (`RUTAS_SIN_NAVBAR` en `App.tsx`).
+- El Navbar y el Home leen la sesión en cada dibujo; se actualizan solos porque
+  `App` se vuelve a dibujar en cada cambio de URL. Si cambias la sesión sin
+  navegar, no se enteran.
+- "Mi perfil" del menú todavía muestra al usuario fijo del backend, no al que
+  inició sesión.
 - El backend no tiene autenticación y usa la *service_role*: cualquiera que
   llegue a `:8080` puede crear subastas a nombre del usuario fijo.
 - `frontend/package-lock.json` y un `package-lock.json` vacío en la raíz
@@ -188,9 +195,10 @@ front mande el token en cada pedido y que el backend lo valide contra
 
 Si vas a trabajar en algo, probablemente esté acá:
 
-1. Usar la sesión: `api.ts` manda `Authorization: Bearer <accessToken>`, el
-   backend valida el JWT y reemplaza el usuario fijo por config; navbar con el
-   nombre y "Cerrar sesión"; renovar el token con el `refreshToken` (dura 1 h).
+1. Usar la sesión en el backend: `api.ts` manda `Authorization: Bearer
+   <accessToken>`, el backend valida el JWT y reemplaza el usuario fijo por
+   config; renovar el token con el `refreshToken` (dura 1 h). Con eso, llenar
+   "Mis pujas"/"Mis ventas" del home con datos reales.
 2. Borrar las 2 cuentas viejas de Auth sin fila en `usuarios`: `/existe` dice
    que no existen y el registro les responde 409.
 3. Conectar el buscador del catálogo y el home a datos reales.

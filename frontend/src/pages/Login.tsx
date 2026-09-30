@@ -1,22 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
+import { guardarSesion, type RespuestaLogin } from '../lib/sesion';
 import './Login.css';
-
-// Lo que devuelve POST /api/usuarios/login (ver ServicioUsuario.iniciarSesion()).
-type RespuestaLogin = {
-  accessToken: string;
-  refreshToken: string;
-  expiraEn: number; // segundos
-  usuario: {
-    id: string;
-    nombre: string;
-    apellido: string;
-    email: string;
-    es_vendedor: boolean;
-    esta_verificado: boolean;
-  };
-};
 
 export default function Login() {
   // Flujo "identifier-first" (como Amazon): primero se pide SOLO el correo.
@@ -67,7 +53,7 @@ export default function Login() {
         // Ojo: cualquier script de la página puede leerlo; si algún día hay una
         // falla XSS, el token queda expuesto (la alternativa segura es una
         // cookie httpOnly puesta por el backend).
-        localStorage.setItem('bh_sesion', JSON.stringify(sesion));
+        guardarSesion(sesion);
         navigate('/');
       }
     } catch (err) {
