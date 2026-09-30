@@ -1,22 +1,9 @@
 import "./Home.css";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { leerSesion } from "../lib/sesion";
 import HomeUsuario from "./HomeUsuario";
-
-// ---------- Datos de ejemplo (reemplazar por datos reales / API) ----------
-
-interface Lot {
-  id: string;
-  title: string;
-  category: string;
-  currentBid: string;
-  bids: number;
-  endsAt: number; // timestamp
-  hash: string;
-}
-
-
-
+import daytona from "../assets/daytona.jpg";
 
 const steps = [
   {
@@ -40,6 +27,8 @@ const steps = [
     body: "Al cerrar el lote, el contrato transfiere el activo tokenizado y libera el pago en el mismo bloque. Sin intermediarios, sin esperas bancarias ni riesgos.",
   },
 ];
+
+const categorias = ["Relojes", "Arte", "Autos clásicos", "Inmuebles", "Joyería", "Coleccionables"];
 
 // ---------- Íconos (SVG inline, sin dependencias externas) ----------
 
@@ -79,79 +68,177 @@ function IconBolt() {
   );
 }
 
+// ---------- Animaciones ----------
+
+// Agrega la clase "visible" a los .reveal cuando entran en pantalla; el CSS hace
+// la transición. Se observa una sola vez por elemento para no re-animar al subir.
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+            obs.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.15 },
+    );
+    ref.current?.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+// ponytail: lote de muestra solo decorativo; si se quiere real, tomar la primera de GET /api/subastas.
+function TicketDemo() {
+  const [segundos, setSegundos] = useState(2 * 3600 + 14 * 60 + 37);
+  const [oferta, setOferta] = useState(48500);
+  const [pulso, setPulso] = useState(false);
+
+  useEffect(() => {
+    const reloj = setInterval(() => setSegundos((s) => (s > 0 ? s - 1 : 0)), 1000);
+    // Simula una puja nueva cada pocos segundos para que el hero "viva".
+    const pujas = setInterval(() => {
+      setOferta((o) => o + 500 * (1 + Math.floor(Math.random() * 3)));
+      setPulso(true);
+      setTimeout(() => setPulso(false), 700);
+    }, 4500);
+    return () => {
+      clearInterval(reloj);
+      clearInterval(pujas);
+    };
+  }, []);
+
+  const hh = String(Math.floor(segundos / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((segundos % 3600) / 60)).padStart(2, "0");
+  const ss = String(segundos % 60).padStart(2, "0");
+
+  return (
+    <div className="ticket" aria-hidden="true">
+      <div className="ticket__head">
+        <span className="ticket__lot">LOTE Nº 0142</span>
+        <span className="ticket__live">
+          <i className="dot" /> EN VIVO
+        </span>
+      </div>
+      <div className="ticket__image">
+        {/* Foto de Cash Macanaya en Unsplash (licencia libre, sin atribución obligatoria). */}
+        <img src={daytona} alt="" />
+      </div>
+      <h3 className="ticket__title">Rolex Daytona Cosmograph</h3>
+      <p className="ticket__category">Relojes · Pieza certificada</p>
+      <div className="ticket__row">
+        <div>
+          <span className="ticket__label">Oferta actual</span>
+          <span className={`ticket__bid ${pulso ? "ticket__bid--pulso" : ""}`}>
+            US$ {oferta.toLocaleString("es-CO")}
+          </span>
+        </div>
+        <div>
+          <span className="ticket__label">Cierra en</span>
+          <span className="ticket__timer">
+            {hh}:{mm}:{ss}
+          </span>
+        </div>
+      </div>
+      <div className="ticket__foot">
+        <span>Verificado en cadena</span>
+        <span className="ticket__hash">0x7a3f…e91c</span>
+      </div>
+    </div>
+  );
+}
+
 // ---------- Página ----------
 
 export default function Home() {
+  const ref = useReveal();
+
   // Con sesión se muestra el home personalizado; sin sesión, el público.
   const sesion = leerSesion();
   if (sesion) return <HomeUsuario sesion={sesion} />;
 
   return (
-    <div className="bh">
-      
-
+    <div className="bh" ref={ref}>
       <main>
         {/* HERO */}
         <section className="hero">
+          <div className="hero__aurora" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
           <div className="bh-container hero__grid">
             <div className="hero__copy">
-             
-              <h1>
-                Subastas verificadas en blockchain.
+              <p className="hero__kicker fade-up">Subastas de alto valor · Custodia en escrow</p>
+              <h1 className="fade-up" style={{ animationDelay: "0.1s" }}>
+                Subastas verificadas en <span className="shimmer">blockchain</span>.
                 <br />
                 El activo cambia de dueño en el mismo bloque.
               </h1>
-              <p className="hero__sub">
+              <p className="hero__sub fade-up" style={{ animationDelay: "0.2s" }}>
                 BidLuxury organiza subastas de relojes, arte, autos clásicos y bienes raíces de alto valor,
                 con custodia en contrato inteligente y liquidación instantánea. Ninguna subasta se pierde,
                 ninguna transferencia depende de un tercero.
               </p>
-              <div className="hero__actions">
-                <button className="btn btn--primary">Ver subastas activas</button>
-                <button className="btn btn--outline">Cómo se verifica un lote</button>
+              <div className="hero__actions fade-up" style={{ animationDelay: "0.3s" }}>
+                <Link to="/catalogo" className="btn btn--primary">
+                  Ver subastas activas
+                </Link>
+                <Link to="/como-funciona" className="btn btn--light">
+                  Cómo se verifica un lote
+                </Link>
               </div>
-
-              
             </div>
 
-            
+            <div className="hero__ticket fade-up" style={{ animationDelay: "0.4s" }}>
+              <TicketDemo />
+            </div>
           </div>
         </section>
+
+        {/* CINTA DE CATEGORÍAS */}
+        <div className="marquee" aria-hidden="true">
+          <div className="marquee__track">
+            {/* Se duplica la lista para que el desplazamiento sea continuo. */}
+            {[...categorias, ...categorias].map((c, i) => (
+              <span key={i}>
+                {c} <b>✦</b>
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* BARRA DE CONFIANZA */}
         <section className="trust" id="seguridad">
           <div className="bh-container trust__grid">
-            <div className="trust__item">
-              <IconShield />
-              <div>
-                <h3>Custodia en escrow</h3>
-                <p>Los fondos de cada puja quedan bloqueados en un contrato auditado hasta que cierra el lote.</p>
+            {[
+              { Icon: IconShield, t: "Custodia en escrow", p: "Los fondos de cada puja quedan bloqueados en un contrato auditado hasta que cierra el lote." },
+              { Icon: IconLedger, t: "Procedencia pública", p: "Cada transferencia de propiedad queda escrita en un registro que cualquiera puede consultar." },
+              { Icon: IconBolt, t: "Liquidación instantánea", p: "Al ganar el lote, el activo tokenizado y el pago se intercambian en la misma transacción." },
+            ].map(({ Icon, t, p }, i) => (
+              <div className="trust__item reveal" key={t} style={{ transitionDelay: `${i * 0.12}s` }}>
+                <div className="trust__icon">
+                  <Icon />
+                </div>
+                <div>
+                  <h3>{t}</h3>
+                  <p>{p}</p>
+                </div>
               </div>
-            </div>
-            <div className="trust__item">
-              <IconLedger />
-              <div>
-                <h3>Procedencia pública</h3>
-                <p>Cada transferencia de propiedad queda escrita en un registro que cualquiera puede consultar.</p>
-              </div>
-            </div>
-            <div className="trust__item">
-              <IconBolt />
-              <div>
-                <h3>Liquidación instantánea</h3>
-                <p>Al ganar el lote, el activo tokenizado y el pago se intercambian en la misma transacción.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
         {/* CÓMO FUNCIONA */}
         <section className="how" id="como-funciona">
           <div className="bh-container">
-            <h2>Cómo funciona una subasta</h2>
+            <h2 className="reveal">Cómo funciona una subasta</h2>
             <div className="how__grid">
-              {steps.map((step) => (
-                <div className="how__step" key={step.n}>
+              {steps.map((step, i) => (
+                <div className="how__step reveal" key={step.n} style={{ transitionDelay: `${i * 0.12}s` }}>
                   <span className="how__n">{step.n}</span>
                   <h3>{step.title}</h3>
                   <p>{step.body}</p>
@@ -161,24 +248,24 @@ export default function Home() {
           </div>
         </section>
 
-        
-
         {/* CTA VENDER */}
         <section className="cta" id="vender">
-          <div className="bh-container cta__inner">
-            <div>
-              <h2>¿Tienes un activo de alto valor?</h2>
-              <p>
-                Nuestro equipo de autentificación tasa la pieza, la tokeniza y la lista con su historial
-                completo de procedencia verificable.
-              </p>
+          <div className="bh-container">
+            <div className="cta__inner reveal">
+              <div>
+                <h2>¿Tienes un activo de alto valor?</h2>
+                <p>
+                  Nuestro equipo de autentificación tasa la pieza, la tokeniza y la lista con su historial
+                  completo de procedencia verificable.
+                </p>
+              </div>
+              <Link to="/vender" className="btn btn--primary">
+                Solicitar tasación
+              </Link>
             </div>
-            <button className="btn btn--primary">Solicitar tasación</button>
           </div>
         </section>
       </main>
-
-      
     </div>
   );
 }
