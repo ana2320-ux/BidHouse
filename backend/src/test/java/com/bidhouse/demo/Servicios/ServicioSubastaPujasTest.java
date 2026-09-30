@@ -31,29 +31,40 @@ class ServicioSubastaPujasTest {
 
     @Test
     void traduceLosCodigosDeLaFuncionPujar() {
-        var insuficiente = ServicioSubasta.errorDeBd(
+        var insuficiente = FuncionesBd.traducirError(
                 Map.of("code", "P0001", "message", "MONTO_INSUFICIENTE", "details", "1250000"), null);
         assertThat(insuficiente.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(insuficiente.getReason()).contains("$1,250,000 USD");
 
-        assertThat(ServicioSubasta.errorDeBd(Map.of("message", "PUJA_PROPIA"), null).getStatusCode())
+        assertThat(FuncionesBd.traducirError(Map.of("message", "PUJA_PROPIA"), null).getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(ServicioSubasta.errorDeBd(Map.of("message", "SUBASTA_CERRADA"), null).getStatusCode())
+        assertThat(FuncionesBd.traducirError(Map.of("message", "SUBASTA_CERRADA"), null).getStatusCode())
                 .isEqualTo(HttpStatus.CONFLICT);
-        assertThat(ServicioSubasta.errorDeBd(Map.of("code", "PGRST202"), null).getStatusCode())
+        assertThat(FuncionesBd.traducirError(Map.of("code", "PGRST202"), null).getStatusCode())
                 .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
-        assertThat(ServicioSubasta.errorDeBd(null, null).getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+        assertThat(FuncionesBd.traducirError(null, null).getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
     }
 
     @Test
     void traduceLosCodigosDeComprarAhora() {
-        assertThat(ServicioSubasta.errorDeBd(Map.of("message", "YA_VENDIDA"), null).getReason())
+        assertThat(FuncionesBd.traducirError(Map.of("message", "YA_VENDIDA"), null).getReason())
                 .contains("ya compró");
-        assertThat(ServicioSubasta.errorDeBd(Map.of("message", "YA_HAY_PUJAS"), null).getStatusCode())
+        assertThat(FuncionesBd.traducirError(Map.of("message", "YA_HAY_PUJAS"), null).getStatusCode())
                 .isEqualTo(HttpStatus.CONFLICT);
-        assertThat(ServicioSubasta.errorDeBd(Map.of("message", "COMPRA_PROPIA"), null).getStatusCode())
+        assertThat(FuncionesBd.traducirError(Map.of("message", "COMPRA_PROPIA"), null).getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(ServicioSubasta.errorDeBd(Map.of("message", "SIN_COMPRA_INMEDIATA"), null).getReason())
+        assertThat(FuncionesBd.traducirError(Map.of("message", "SIN_COMPRA_INMEDIATA"), null).getReason())
                 .contains("solo se puede pujar");
+    }
+
+    @Test
+    void traduceLosCodigosDeLosPagos() {
+        var sinSaldo = FuncionesBd.traducirError(Map.of("message", "SALDO_INSUFICIENTE", "details", "500"), null);
+        assertThat(sinSaldo.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(sinSaldo.getReason()).contains("$500 USD");
+        assertThat(FuncionesBd.traducirError(Map.of("message", "NO_ES_TU_CONTRATO"), null).getStatusCode())
+                .isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(FuncionesBd.traducirError(Map.of("message", "CONTRATO_YA_PAGADO"), null).getStatusCode())
+                .isEqualTo(HttpStatus.CONFLICT);
     }
 }

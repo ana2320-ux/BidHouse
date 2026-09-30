@@ -204,6 +204,11 @@ public class SupabaseClient {
                     new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Demasiados intentos. Espera unos minutos.");
             // Ojo: se compara "error_code" (invalid_credentials), no "msg" (Invalid login credentials).
             // El msg es texto para humanos y Supabase lo puede cambiar; el código es estable.
+            // Con "Confirm email" activado en Supabase, no se puede entrar
+            // hasta hacer clic en el enlace que llega al correo.
+            case "email_not_confirmed" ->
+                    new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "Confirma tu correo antes de iniciar sesión: te enviamos un enlace al registrarte.");
             case "invalid_credentials" ->
                     new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos.");
             // Cualquier otra cosa es un fallo de Supabase, no del usuario: 502 Bad Gateway

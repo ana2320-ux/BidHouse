@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
 import { leerSesion } from '../lib/sesion';
+import { SaldoCuenta } from '../components/SaldoCuenta';
 import './Perfil.css';
 
 // Forma de la respuesta de GET /api/usuarios/perfil (ver ServicioUsuario.perfil()).
@@ -36,15 +37,14 @@ interface PerfilData {
     monto: number;
     creado_en: string;
     rol: 'comprador' | 'vendedor';
-    subastas: { titulo: string } | null;
+    subastas: { id: string; titulo: string } | null;
   }[];
   contratosPorEstado: Record<string, number>;
 }
 
-// Etapas de un contrato de garantía (escrow), en orden.
-// ponytail: solo "pendiente" (valor por defecto) y "completada" existen hoy en la
-// BD; los del medio son supuestos. Ajustarlos al CHECK de transacciones.estado
-// cuando se implementen los contratos.
+// Etapas de un contrato de garantía (escrow), en orden. Son los estados del
+// CHECK de transacciones.estado (backend/sql/fase4_pagos.sql). "recibido" dura
+// un instante: al confirmar la recepción el pago se libera y pasa a completada.
 const ETAPAS = [
   { estado: 'pendiente', nombre: 'Pago pendiente' },
   { estado: 'en_custodia', nombre: 'En custodia' },
@@ -142,6 +142,9 @@ function PerfilConSesion() {
       </section>
 
       {/* ── Contenido principal: dos columnas ── */}
+      {/* ── Saldo de BidHouse: recargar con Mercado Pago y ver el extracto ── */}
+      <SaldoCuenta />
+
       <section className="profile-dashboard">
         {/* Columna izquierda: resumen de lo publicado (sin cambios) */}
         <div className="dashboard-col">
@@ -365,8 +368,13 @@ function Contrato({ transaccion: t }: { transaccion: PerfilData['transacciones']
   // Posición de su estado en ETAPAS; si es uno desconocido (ej. "cancelada"),
   // -1: no se marca ninguna etapa y se muestra el estado tal cual.
   const actual = ETAPAS.findIndex((e) => e.estado === t.estado);
-  return (
-    <article className="activity-item contrato">
+  // Lo que cada uno tiene que hacer se hace en el detalle del activo
+  // (components/PagoContrato.tsx): pagar, marcar el envío o confirmar que llegó.
+  const teToca =
+    (t.rol === 'comprador' && (t.estado === 'pendiente' || t.estado === 'enviado')) ||
+    (t.rol === 'vendedor' && t.estado === 'en_custodia');
+  const contenido = (
+    <article className={teToca ? 'activity-item contrato contrato--te-toca' : 'activity-item contrato'}>
       <div className="activity-item__info">
         <h4>{t.subastas?.titulo ?? 'Subasta'}</h4>
         <p>
@@ -379,9 +387,16 @@ function Contrato({ transaccion: t }: { transaccion: PerfilData['transacciones']
           ))}
         </div>
       </div>
-      <span className="badge-action neutral">{ETAPAS[actual]?.nombre ?? t.estado}</span>
+      <span className={teToca ? 'badge-action contrato__te-toca' : 'badge-action neutral'}>
+        {teToca ? 'Te toca →' : ETAPAS[actual]?.nombre ?? t.estado}
+      </span>
     </article>
   );
+  // Los activos vendidos ya no salen en el catálogo: este es el camino para
+  // volver a su detalle y gestionar el contrato.
+  return t.subastas?.id
+    ? <Link to={`/activo/${t.subastas.id}`} className="contrato__enlace">{contenido}</Link>
+    : contenido;
 }
 
 function IconoCamara() {

@@ -88,15 +88,16 @@ son strings y no van a fallar al compilar.
 
 Los cambios que hicimos nosotros al esquema (columnas, funciones de Postgres)
 quedan como scripts en `backend/sql/`, para correrlos en el SQL Editor en orden
-(`fase1_pujas.sql`, `fase2_cierre.sql`, `fase3_compra.sql`, ...). El backend no puede hacer DDL por
+(`fase1_pujas.sql`, `fase2_cierre.sql`, `fase3_compra.sql`, `fase4_pagos.sql`, `fase4b_entrega.sql`, ...). El backend no puede hacer DDL por
 la API.
 
 **`CHECK` que existen en la BD** (descubiertos probando; no se ven desde la API):
 - `subastas.estado` acepta `pendiente`, `activa`, `vendida`, `cancelada`,
   `finalizada` (rechaza, por ejemplo, `adjudicada` o `desierta`).
-- `transacciones.estado` acepta `pendiente` y `completada`; rechaza `en_custodia`,
-  `enviado`, `recibido`, `cancelada` y `en_disputa`. La fase 4 (pagos) tiene que
-  reemplazar este CHECK para las etapas del contrato.
+- `transacciones.estado`: el CHECK original solo aceptaba `pendiente` y
+  `completada`; `fase4_pagos.sql` lo reemplaza por `pendiente`, `en_custodia`,
+  `enviado`, `recibido`, `completada`, `cancelada`, `en_disputa`.
+- `usuarios.saldo_disponible >= 0` (`fase4_pagos.sql`).
 - `notificaciones.tipo` no tiene restricción.
 - `usuarios.documento_identidad` y `usuarios.email` son **únicos** (el teléfono no).
   `ServicioUsuario.mensajeDuplicado()` dice cuál chocó al registrarse.
@@ -153,10 +154,39 @@ la API.
   (así el detalle usa `voyGanando` = "lo compré") y crea el mismo contrato
   `pendiente` que el cierre. Los errores de ambas funciones los traduce
   `ServicioSubasta.errorDeBd()`.
+- **Pagos sin volver al sitio.** Mercado Pago no devuelve a `localhost` después
+  de pagar (solo muestra el comprobante). Por eso el perfil y el panel de pago
+  llaman `POST /api/pagos/sincronizar` al abrirse: busca en Mercado Pago
+  (`/v1/payments/search`, últimos 7 días) los pagos aprobados de ese usuario
+  que no se hayan registrado y los registra. Hace el papel de los webhooks.
+- **Pagos (fase 4a).** `ControladorPagos` (`/api/pagos`, todo con sesión):
+  pagar un contrato con saldo (`pagar_contrato_con_saldo()`) o con Mercado Pago
+  Checkout Pro (`MercadoPagoClient` crea la preferencia; el comprador elige
+  tarjeta o dinero en cuenta en la página de Mercado Pago), recargar saldo por
+  Mercado Pago, y consultar saldo + extracto (`movimientos`). Al volver de
+  Mercado Pago, `/pagos/retorno` manda el `payment_id` a `POST /api/pagos/confirmar`,
+  que consulta el pago en la API de Mercado Pago y según `external_reference`
+  (`contrato:<id>` o `recarga:<idUsuario>:<uuid>`) llama
+  `registrar_pago_mercadopago()` o `acreditar_recarga()`. Ambas son
+  idempotentes: confirmar dos veces no cobra ni acredita dos veces. Todas las
+  funciones de la BD pasan por `Servicios/FuncionesBd` (llamada + traducción
+  de errores a mensajes en español).
+- **Entrega y liberación (fase 4b).** `ControladorContratos` (`/api/contratos/{id}/...`):
+  el vendedor marca `envio` (con guía), el comprador confirma `recepcion` o
+  reporta un `problema`. Confirmar llama `liberar_contrato()`, que pasa el
+  contrato a `completada` y le suma al vendedor monto − comisión como saldo
+  (movimiento `venta_liberada`). `CierreSubastas` también llama cada minuto
+  `procesar_vencimientos_contratos()`: sin pagar en 48 h → `cancelada`; sin
+  enviar en 5 días → `cancelada` y reembolso al saldo del comprador; sin
+  confirmar en 7 días → se libera solo. Las disputas quedan en `en_disputa`
+  con el motivo en `notas`; todavía no hay quién las resuelva.
+- **Moneda del demo:** el sitio muestra USD y Mercado Pago (cuenta de Colombia)
+  cobra en COP el mismo número, redondeado a pesos (`MercadoPagoClient.aPesos()`).
+  Una recarga de 50.000 COP suma 50.000 USD de saldo.
 - **Cierre de subastas.** `Servicios/CierreSubastas` (`@Scheduled`, cada minuto)
   llama la función `cerrar_subastas_vencidas()` (`backend/sql/fase2_cierre.sql`).
   Cada subasta activa vencida pasa a `finalizada`; si tiene líder, se marca la
-  puja ganadora, se crea la `transaccion` `pendiente` (comisión 3 %, plazo de
+  puja ganadora, se crea la `transaccion` `pendiente` (comisión 1 %, plazo de
   pago 48 h en `fecha_limite_pago`) y se crean `notificaciones` para ganador,
   vendedor y perdedores. Usa `for update skip locked`: es seguro que corran
   varios backends a la vez. Se apaga con `bidhouse.cierre-automatico=false`
@@ -174,15 +204,15 @@ Distingue lo que ya funciona de lo que es fachada:
 | --- | --- |
 | `Login.tsx` | **Real**, en dos pasos: `POST /api/usuarios/existe` (si el correo no tiene fila en `usuarios`, manda a `/registro`) y `POST /api/usuarios/login`. La sesión se guarda y se lee solo a través de `src/lib/sesion.ts` (vence a la hora; no se renueva). |
 | `Navbar.tsx` | Con sesión muestra el nombre y un menú (Mi perfil, Vender, Cerrar sesión). |
-| `HomeUsuario.tsx` | Home con sesión (estilo Mercado Libre): saludo, categorías con fotos (tomadas de sus activos, porque `categorias.imagen_url` está vacía), accesos "Mis pujas"/"Mis ventas" que por ahora solo enlazan, y vitrina de servicios (destacar, peritaje, BidHouse Plus 3% → 1%) sin implementar. |
-| `Registro.tsx` | **Real** (`POST /api/usuarios/registro`). El proyecto tiene la confirmación de correo desactivada: la cuenta queda activa al crearse. Hay 2 cuentas viejas creadas desde el navegador que no tienen fila en `usuarios`. |
+| `HomeUsuario.tsx` | Home con sesión (estilo Mercado Libre): saludo, categorías con fotos (tomadas de sus activos, porque `categorias.imagen_url` está vacía), accesos "Mis pujas"/"Mis ventas" que por ahora solo enlazan, y vitrina de servicios (destacar, peritaje, BidHouse Plus 1% → 0.5%) sin implementar. |
+| `Registro.tsx` | **Real** (`POST /api/usuarios/registro`). La confirmación de correo de Supabase está **desactivada** a propósito ("Confirm email" en Authentication → Sign In / Providers → Email): la cuenta queda activa al crearse. Si alguien la activa, las cuentas nuevas no pueden entrar hasta confirmar (el login responde 403 "Confirma tu correo") y el correo por defecto de Supabase solo llega a los correos del equipo. Hay 2 cuentas viejas creadas desde el navegador que no tienen fila en `usuarios`. |
 | `Perfil.tsx` | **Real y propio** (sin sesión redirige a `/login`). Foto (`POST /api/usuarios/perfil/foto`) y descripción (`PATCH /api/usuarios/perfil`). Los botones "Ver subastas activas / mis ofertas / contratos" están deshabilitados: sus pantallas no existen. "Transacciones recientes" muestra etapas del escrow cuyos estados intermedios son supuestos. |
 | `Catalogo.tsx` | **Real** (`GET /api/subastas`, `/api/categorias`). Cada tarjeta muestra el modo de venta (`src/lib/modos.ts`, compartido con Vender). Los filtros por categoría funcionan; el buscador no está conectado. |
 | `DetalleActivo.tsx` | **Real**: detalle, panel para pujar y para comprar ("Comprar ahora" en precio fijo, "Cómpralo ya" en mixto sin pujas), ambos con confirmación, e historial (`components/Pujas.tsx`); se refresca cada 15 s. Muestra el resultado al cerrar o vender según quién mira. |
 | `Vender.tsx` | **Real** (`POST /api/subastas`), exige sesión. Elige el modo (subasta, precio fijo, mixto); el backend lo guarda como `permite_pujas` + `precio_compra_inmediata` (`NuevaSubasta.modoEfectivo()`). Publica directo como `activa` y lleva al detalle. Inserta en `activos` y luego en `subastas`, sin transacción. |
 | `Home.tsx` | Sin sesión, home público estático; con sesión delega en `HomeUsuario`. |
 | `ComoFunciona.tsx` | Contenido estático, está bien así. |
-| Pagos | No existen: todo contrato queda `pendiente`. Las notificaciones se guardan pero no hay pantalla que las muestre. |
+| Pagos y entrega | **Fases 4a y 4b:** pagar con saldo o Mercado Pago, marcar envío, confirmar recepción o reportar problema, todo desde el detalle del activo (`components/PagoContrato.tsx`); recargar saldo y ver el extracto en el perfil (`components/SaldoCuenta.tsx`); retorno en `RetornoPago.tsx`. Falta 4c (contrato en blockchain) y resolver disputas. Las notificaciones se guardan pero no hay pantalla que las muestre. |
 
 ## Decisión de arquitectura: modelo B
 
@@ -205,7 +235,8 @@ Acordadas con el equipo; todavía no están implementadas.
 - **Contrato de garantía** (`transacciones.estado`): `pendiente` (pago, 48 h) →
   `en_custodia` (envío, 5 días) → `enviado` (confirmar recepción, 7 días; si no
   responde se da por recibido) → `recibido` → `completada` (pago liberado al
-  vendedor menos comisión 3 %, 1 % con BidHouse Plus). Ramas: `cancelada` (no
+  vendedor menos comisión 1 %, 0,5 % con BidHouse Plus). La tasa vive en una
+  sola función de la BD, `comision_plataforma()` (`fase2_cierre.sql`). Ramas: `cancelada` (no
   pagó: se ofrece al segundo postor) y `en_disputa`.
 - **Pagos con Mercado Pago Checkout Pro (sandbox).** El backend crea la
   preferencia con `MERCADOPAGO_ACCESS_TOKEN` (solo en `backend/.env`, nunca en
@@ -281,6 +312,12 @@ Acordadas con el equipo; todavía no están implementadas.
   de identidad se hace al crear la cuenta, así que todo usuario está verificado.
 - El CORS permite `GET`/`POST`/`PATCH` y expone `WWW-Authenticate`; sin eso el
   front no puede distinguir "token vencido" de otros 401.
+- Mercado Pago **rechaza `auto_return` con `localhost`** (exige https público):
+  después de pagar, el comprador vuelve con el botón "Volver al sitio". Por la
+  misma razón no hay webhooks; un pago "pendiente" se re-verifica a mano desde
+  `/pagos/retorno`.
+- `MERCADOPAGO_ACCESS_TOKEN` puede faltar en `backend/.env`: la app arranca y
+  solo fallan los pagos (503 con mensaje claro).
 - `frontend/package-lock.json` y un `package-lock.json` vacío en la raíz
   están versionados por accidente; el lockfile real es `bun.lock`.
 

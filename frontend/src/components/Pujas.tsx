@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
 import { leerSesion } from '../lib/sesion';
+import { PagoContrato, type MiContrato } from './PagoContrato';
 import './Pujas.css';
 
 // Lo que PanelPuja necesita de GET /api/subastas/{id} (ver ServicioSubasta.obtenerDetalle()).
@@ -18,6 +19,7 @@ export interface SubastaParaPujar {
   esMiPublicacion?: boolean;
   voyGanando?: boolean;
   pujaMinima?: number | null;
+  miContrato?: MiContrato | null; // solo si quien mira es comprador o vendedor
 }
 
 interface Puja {
@@ -73,9 +75,8 @@ function resultadoCierre(subasta: SubastaParaPujar, vencida: boolean): { texto: 
   // El comprador queda como pujador_lider_id, por eso "voyGanando" = "lo compré".
   if (subasta.estado === 'vendida') {
     if (subasta.voyGanando) {
-      // ponytail: el botón para pagar llega con los pagos (fase 4).
       return {
-        texto: `🛍 ¡Compraste este activo por ${precio}! Tienes 48 horas para pagar; el pago se habilitará pronto.`,
+        texto: `🛍 ¡Compraste este activo por ${precio}!`,
         clase: 'puja-panel__estado--ganando',
       };
     }
@@ -91,9 +92,8 @@ function resultadoCierre(subasta: SubastaParaPujar, vencida: boolean): { texto: 
     return { texto: 'Esta subasta todavía no está abierta a pujas.', clase: 'puja-panel__estado--cerrada' };
   }
   if (subasta.voyGanando) {
-    // ponytail: el botón para pagar llega con los pagos (fase 4).
     return {
-      texto: `🏆 ¡Ganaste esta subasta con ${precio}! Tienes 48 horas para pagar; el pago se habilitará pronto.`,
+      texto: `🏆 ¡Ganaste esta subasta con ${precio}!`,
       clase: 'puja-panel__estado--ganando',
     };
   }
@@ -135,6 +135,8 @@ export function PanelPuja({ subasta, alPujar }: { subasta: SubastaParaPujar; alP
     return (
       <div className="puja-panel">
         <p className={`puja-panel__estado ${clase}`}>{texto}</p>
+        {/* Comprador: pagar. Vendedor: en qué va el pago. */}
+        {subasta.miContrato && <PagoContrato contrato={subasta.miContrato} alPagar={alPujar} />}
       </div>
     );
   }
