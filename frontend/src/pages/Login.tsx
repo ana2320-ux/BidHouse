@@ -1,22 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
+import { guardarSesion, type RespuestaLogin } from '../lib/sesion';
 import './Login.css';
-
-// Lo que devuelve POST /api/usuarios/login (ver ServicioUsuario.iniciarSesion()).
-type RespuestaLogin = {
-  accessToken: string;
-  refreshToken: string;
-  expiraEn: number; // segundos
-  usuario: {
-    id: string;
-    nombre: string;
-    apellido: string;
-    email: string;
-    es_vendedor: boolean;
-    esta_verificado: boolean;
-  };
-};
 
 export default function Login() {
   // Flujo "identifier-first" (como Amazon): primero se pide SOLO el correo.
@@ -29,6 +15,9 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  // Si llegó desde otra página (ej. "Inicia sesión para pujar" en un activo),
+  // esa página viene en el state como "desde" y se vuelve ahí al entrar.
+  const destino = (useLocation().state as { desde?: string } | null)?.desde ?? '/';
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,8 +56,8 @@ export default function Login() {
         // Ojo: cualquier script de la página puede leerlo; si algún día hay una
         // falla XSS, el token queda expuesto (la alternativa segura es una
         // cookie httpOnly puesta por el backend).
-        localStorage.setItem('bh_sesion', JSON.stringify(sesion));
-        navigate('/');
+        guardarSesion(sesion);
+        navigate(destino);
       }
     } catch (err) {
       setError(err instanceof ApiError

@@ -11,6 +11,10 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins("http://localhost:5173")
-                .allowedMethods("GET", "POST");
+                .allowedMethods("GET", "POST", "PATCH")
+                // El navegador le oculta a JavaScript los headers de respuesta de
+                // otro origen salvo los que se "exponen" aquí. api.ts lee este
+                // para distinguir "token vencido" de otros 401.
+                .exposedHeaders("WWW-Authenticate");
     }
 }

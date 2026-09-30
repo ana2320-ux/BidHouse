@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
+import { ETIQUETA_MODO, modoDe } from '../lib/modos';
 import './Catalogo.css';
 
 interface Categoria {
@@ -16,6 +17,8 @@ interface Subasta {
     esta_verificado: boolean;
     categorias: { nombre: string } | null;
   } | null;
+  permite_pujas: boolean | null;
+  precio_compra_inmediata: number | null;
 }
 
 const TODOS = 'Todos';
@@ -28,7 +31,10 @@ const hashCorto = (id: string) => {
 export default function Catalogo() {
   const [subastas, setSubastas] = useState<Subasta[] | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [filtro, setFiltro] = useState(TODOS);
+  // ?categoria=Vehículos en la URL (lo usa el home al hacer clic en una
+  // categoría) deja el filtro elegido desde el principio.
+  const [params] = useSearchParams();
+  const [filtro, setFiltro] = useState(params.get('categoria') ?? TODOS);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -80,7 +86,7 @@ export default function Catalogo() {
       {/* Grid de Tarjetas */}
       <div className="catalog-grid">
         {visibles.map((item) => {
-          const disponible = item.activos?.esta_verificado ?? false;
+          const modo = modoDe(item.permite_pujas, item.precio_compra_inmediata);
           const imagen = item.activos?.imagenes?.[0];
           return (
             <Link key={item.id} to={`/activo/${item.id}`} className="catalog-card-link">
@@ -91,9 +97,8 @@ export default function Catalogo() {
               <div className="catalog-card__content">
                 <div className="catalog-card__meta">
                   <span className="category">{(item.activos?.categorias?.nombre ?? 'SIN CATEGORÍA').toUpperCase()}</span>
-                  <span className={`status ${disponible ? 'status--available' : 'status--pending'}`}>
-                    • {disponible ? 'Disponible' : 'En verificación'}
-                  </span>
+                  {/* Cómo se vende: se ve antes de entrar al detalle. */}
+                  <span className={`status status--${modo}`}>{ETIQUETA_MODO[modo]}</span>
                 </div>
                 <h3 className="catalog-card__title">{item.titulo}</h3>
                 <div className="catalog-card__hash">

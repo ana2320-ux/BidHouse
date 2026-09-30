@@ -1,14 +1,16 @@
 package com.bidhouse.demo.Servicios;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bidhouse.demo.Modelos.Credenciales;
@@ -17,50 +19,68 @@ import com.bidhouse.demo.Modelos.NuevoUsuario;
 @Service
 public class ServicioUsuario {
 
-    private final SupabaseClient db;
-    private final String emailActual;
+    // Estados de "transacciones" que ya terminaron. Cualquier otro es un
+    // contrato de garantía todavía en proceso.
+    // ponytail: "cancelada" es supuesto; confirmar contra el CHECK de
+    // transacciones.estado en Supabase cuando se implementen los contratos.
+    private static final Set<String> ESTADOS_TERMINADOS = Set.of("completada", "cancelada");
 
-    public ServicioUsuario(SupabaseClient db, @Value("${bidhouse.usuario-actual-email}") String emailActual) {
+    private static final int MAX_DESCRIPCION = 300;
+
+    private final SupabaseClient db;
+
+    public ServicioUsuario(SupabaseClient db) {
         this.db = db;
-        this.emailActual = emailActual;
     }
 
-    // ponytail: sin login aún, el usuario actual es fijo por config. Reemplazar por el JWT de Supabase (SUPABASE_JWKS_URL) al hacer auth.
-    public Map<String, Object> usuarioActual() {
-        List<Map<String, Object>> filas = db.consultar("/usuarios?email=eq." + emailActual + "&limit=1");
+    // El id llega del token ya verificado (el "sub" del JWT, ver SeguridadConfig):
+    // nadie puede hacerse pasar por otro cambiando un parámetro. Por eso
+    // concatenarlo en la consulta es seguro.
+    public Map<String, Object> usuarioActual(String id) {
+        List<Map<String, Object>> filas = db.consultar("/usuarios?id=eq." + id + "&limit=1");
         if (filas.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado: " + emailActual);
+            // Cuenta en Auth sin fila en "usuarios" (las viejas creadas desde el navegador).
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Tu cuenta no tiene un perfil asociado. Contacta a soporte.");
         }
         return filas.get(0);
     }
 
-    public Map<String, Object> perfil() {
-        Map<String, Object> u = usuarioActual();
-        String id = (String) u.get("id");
+    public Map<String, Object> perfil(String id) {
+        Map<String, Object> u = usuarioActual(id);
 
         List<Map<String, Object>> activos = db.consultar("/activos?vendedor_id=eq." + id
                 + "&select=id,nombre,precio_estimado,imagenes,esta_verificado,categorias(nombre),subastas(estado)&order=creado_en.desc");
-        List<Map<String, Object>> pujas = db.consultar("/pujas?pujador_id=eq." + id + "&select=monto,subastas(estado)");
-        List<Map<String, Object>> cerradas = db.consultar("/transacciones?estado=eq.completada&or=(vendedor_id.eq." + id
-                + ",comprador_id.eq." + id + ")&select=monto");
-        List<Map<String, Object>> actividad = db.consultar("/notificaciones?usuario_id=eq." + id
-                + "&order=creado_en.desc&limit=5&select=id,tipo,titulo,mensaje,creado_en");
+        List<Map<String, Object>> pujas = db.consultar("/pujas?pujador_id=eq." + id + "&select=subasta_id");
+        // Todas las transacciones donde es comprador O vendedor, las más nuevas primero.
+        List<Map<String, Object>> transacciones = db.consultar("/transacciones?or=(vendedor_id.eq." + id
+                + ",comprador_id.eq." + id + ")&select=id,estado,monto,creado_en,comprador_id,subastas(titulo)"
+                + "&order=creado_en.desc");
 
         List<?> estados = activos.stream().flatMap(a -> ((List<?>) a.get("subastas")).stream())
                 .map(s -> ((Map<?, ?>) s).get("estado")).toList();
         long enVivo = estados.stream().filter("activa"::equals).count();
         long enEspera = estados.stream().filter("pendiente"::equals).count();
 
-        List<Map<String, Object>> pujasVivas = pujas.stream()
-                .filter(p -> p.get("subastas") instanceof Map<?, ?> s && "activa".equals(s.get("estado"))).toList();
+        long completadas = transacciones.stream().filter(t -> "completada".equals(t.get("estado"))).count();
+        long enProceso = transacciones.stream().filter(t -> !ESTADOS_TERMINADOS.contains(t.get("estado"))).count();
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("activosEnVivo", enVivo);
         stats.put("activosEnEspera", enEspera);
-        stats.put("ofertasActivas", pujasVivas.size());
-        stats.put("sumaOfertas", suma(pujasVivas));
-        stats.put("transaccionesCompletadas", cerradas.size());
-        stats.put("volumenTotal", suma(cerradas));
+        stats.put("ofertasRealizadas", pujas.size());
+        // Varias pujas pueden ser en la misma subasta: se cuentan subastas distintas.
+        stats.put("subastasConOfertas", pujas.stream().map(p -> p.get("subasta_id")).distinct().count());
+        stats.put("transaccionesCompletadas", completadas);
+        stats.put("contratosEnProceso", enProceso);
+
+        // Para "Transacciones recientes": las 5 últimas, diciendo si compró o vendió.
+        List<Map<String, Object>> recientes = transacciones.stream().limit(5).map(t -> {
+            Map<String, Object> r = new LinkedHashMap<>(t); // copia: no tocar la fila original
+            // comprador_id solo sirve para saber el rol; no se manda al front.
+            r.put("rol", id.equals(r.remove("comprador_id")) ? "comprador" : "vendedor");
+            return r;
+        }).toList();
 
         boolean vendedor = Boolean.TRUE.equals(u.get("es_vendedor"));
         boolean verificado = Boolean.TRUE.equals(u.get("esta_verificado"));
@@ -69,13 +89,65 @@ public class ServicioUsuario {
         Map<String, Object> perfil = new LinkedHashMap<>();
         perfil.put("nombre", u.get("nombre"));
         perfil.put("apellido", u.get("apellido"));
-        perfil.put("username", emailActual.split("@")[0]);
-        perfil.put("descripcion", (vendedor ? "Vendedor" : "Comprador") + (verificado ? " verificado" : "") + ciudad);
+        perfil.put("username", String.valueOf(u.get("email")).split("@")[0]);
+        // "resumen" lo arma el sistema; "descripcion" la escribe el usuario.
+        perfil.put("resumen", (vendedor ? "Vendedor" : "Comprador") + (verificado ? " verificado" : "") + ciudad);
+        perfil.put("descripcion", u.get("descripcion"));
+        perfil.put("imagenUrl", u.get("imagen_url"));
         perfil.put("verificado", verificado);
         perfil.put("stats", stats);
         perfil.put("activos", activos);
-        perfil.put("actividad", actividad);
+        perfil.put("transacciones", recientes);
+        // Cuántos contratos hay en cada etapa (estado → cantidad), para el resumen visual.
+        perfil.put("contratosPorEstado", transacciones.stream()
+                .collect(Collectors.groupingBy(t -> String.valueOf(t.get("estado")), Collectors.counting())));
         return perfil;
+    }
+
+    // ── Descripción del perfil ──
+    public Map<String, Object> actualizarDescripcion(String id, String texto) {
+        String limpia = texto == null ? "" : texto.strip();
+        if (limpia.length() > MAX_DESCRIPCION) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La descripción no puede tener más de " + MAX_DESCRIPCION + " caracteres");
+        }
+        // Vacía = sin descripción (null), no un texto en blanco.
+        String valor = limpia.isEmpty() ? null : limpia;
+
+        Map<String, Object> cambios = new HashMap<>();
+        cambios.put("descripcion", valor);
+        try {
+            db.actualizar("/usuarios?id=eq." + id, cambios);
+        } catch (RestClientResponseException e) {
+            // PGRST204 = PostgREST no encuentra la columna: falta crearla en Supabase.
+            if (e.getResponseBodyAsString().contains("PGRST204")) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "Falta la columna usuarios.descripcion en la base de datos.", e);
+            }
+            throw e;
+        }
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("descripcion", valor);
+        return respuesta;
+    }
+
+    // ── Foto de perfil ──
+    // Se guarda en el bucket público "avatares" como <id>/avatar (siempre el
+    // mismo nombre: al cambiarla se reemplaza y no quedan fotos viejas huérfanas).
+    public Map<String, Object> cambiarFoto(String id, MultipartFile foto) {
+        // 2 MB: el límite del bucket "avatares". Se revisa aquí para responder un
+        // 400 claro en vez del error que daría Storage.
+        Imagenes.Imagen imagen = Imagenes.leer(foto, 2 * 1024 * 1024);
+
+        String url = db.subirArchivoPublico("avatares", id, "avatar", imagen.bytes(), imagen.tipo());
+        // ?v=<hora> cambia la URL en cada subida. Sin esto el navegador seguiría
+        // mostrando la foto vieja que tiene guardada en caché (la ruta es la misma).
+        String urlVersionada = url + "?v=" + System.currentTimeMillis();
+
+        Map<String, Object> cambios = new HashMap<>();
+        cambios.put("imagen_url", urlVersionada);
+        db.actualizar("/usuarios?id=eq." + id, cambios);
+        return Map.of("imagenUrl", urlVersionada);
     }
 
     // ── Registro ──
@@ -116,15 +188,25 @@ public class ServicioUsuario {
                 // el segundo queda "adjunto" al primero para poder diagnosticarlo.
                 e.addSuppressed(alBorrar);
             }
-            // 409 Conflict de PostgREST = choca con una restricción UNIQUE (ej. el email).
+            // 409 Conflict de PostgREST = choca con una restricción UNIQUE. En
+            // "usuarios" son únicos el email y el documento de identidad.
             if (e instanceof RestClientResponseException r && r.getStatusCode().value() == 409) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo.", e);
+                throw new ResponseStatusException(HttpStatus.CONFLICT, mensajeDuplicado(r.getResponseBodyAsString()), e);
             }
             throw e;
         }
 
         // Solo se devuelve lo necesario para confirmar; nunca la contraseña.
         return Map.of("id", id, "email", email);
+    }
+
+    // PostgREST dice qué columna chocó: {"details":"Key (documento_identidad)=(999) already exists."}.
+    // Sin esto, alguien con un documento ya registrado leería que el problema es su correo.
+    static String mensajeDuplicado(String cuerpoError) {
+        if (cuerpoError != null && cuerpoError.contains("documento_identidad")) {
+            return "Ya existe una cuenta con ese documento de identidad.";
+        }
+        return "Ya existe una cuenta con ese correo.";
     }
 
     // ── Login, paso 1: ¿el correo ya tiene cuenta? ──
@@ -170,9 +252,5 @@ public class ServicioUsuario {
         respuesta.put("expiraEn", sesion.get("expires_in")); // segundos (3600 = 1 hora)
         respuesta.put("usuario", filas.get(0));
         return respuesta;
-    }
-
-    private static BigDecimal suma(List<Map<String, Object>> filas) {
-        return filas.stream().map(f -> new BigDecimal(String.valueOf(f.get("monto")))).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

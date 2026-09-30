@@ -6,7 +6,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+// Sin el cierre automático: los tests no deben cerrar subastas reales en Supabase.
+@SpringBootTest(properties = "bidhouse.cierre-automatico=false")
 class BidHouseApplicationTests {
 
 	@Value("${supabase.url}")
