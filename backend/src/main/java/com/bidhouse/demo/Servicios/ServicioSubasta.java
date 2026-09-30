@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -78,11 +79,19 @@ public class ServicioSubasta {
     }
 
     private Map<String, Object> contratoDe(String idSubasta, String idUsuario) {
-        List<Map<String, Object>> filas = db.consultar("/transacciones?subasta_id=eq." + idSubasta
+        String consulta = "/transacciones?subasta_id=eq." + idSubasta
                 + "&or=(comprador_id.eq." + idUsuario + ",vendedor_id.eq." + idUsuario + ")"
                 + "&select=id,estado,monto,comision_plataforma,fecha_limite_pago,fecha_limite_envio,"
-                + "guia_envio,enviado_en,fecha_limite_confirmacion,liberado_en,notas,comprador_id"
-                + "&order=creado_en.desc&limit=1");
+                + "guia_envio,enviado_en,fecha_limite_confirmacion,liberado_en,notas,comprador_id";
+        List<Map<String, Object>> filas;
+        try {
+            // Con los hitos ya registrados en la blockchain, para "Ver en blockchain".
+            filas = db.consultar(consulta + ",hitos_blockchain(hito,tx_hash,creado_en)&order=creado_en.desc&limit=1");
+        } catch (RestClientResponseException e) {
+            // Si en esta BD todavía no se corrió fase4c_blockchain.sql, la tabla no
+            // existe: se muestra el contrato sin hitos en vez de romper el detalle.
+            filas = db.consultar(consulta + "&order=creado_en.desc&limit=1");
+        }
         if (filas.isEmpty()) return null;
         Map<String, Object> contrato = new LinkedHashMap<>(filas.get(0));
         contrato.put("rol", idUsuario.equals(contrato.remove("comprador_id")) ? "comprador" : "vendedor");

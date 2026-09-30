@@ -179,3 +179,47 @@
   background: #fef3c7;
   color: #92400e;
 }
+
+/* ── Registro en blockchain ── */
+.hitos-blockchain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px dashed #b9c6d4;
+  border-radius: 10px;
+  background: #f5f8fb;
+  font-size: 0.8rem;
+}
+
+.hitos-blockchain__titulo {
+  font-weight: 700;
+  color: var(--blue-dark);
+}
+
+.hitos-blockchain__pendiente {
+  color: var(--gray-mid);
+}
+
+.hitos-blockchain ol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hitos-blockchain li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.hitos-blockchain a {
+  color: var(--blue);
+  font-weight: 600;
+  white-space: nowrap;
+}

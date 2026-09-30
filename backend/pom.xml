@@ -35,6 +35,14 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
+		<!-- Habla con la red Ethereum (Sepolia): firma y envía las transacciones que
+		     registran los contratos de garantía en RegistroBidHouse. -->
+		<dependency>
+			<groupId>org.web3j</groupId>
+			<artifactId>core</artifactId>
+			<version>4.14.0</version>
+		</dependency>
+
 		<!-- Valida los JWT que emite Supabase Auth (Authorization: Bearer ...) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -1,0 +1,15 @@
+{
+  "name": "bidhouse-blockchain",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compilar": "bun scripts/compilar.ts",
+    "billetera": "bun scripts/crear-billetera.ts",
+    "desplegar": "bun scripts/desplegar.ts",
+    "verificar": "bun scripts/verificar.ts"
+  },
+  "dependencies": {
+    "ethers": "6",
+    "solc": "0.8.26"
+  }
+}
