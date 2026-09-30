@@ -1,4 +1,19 @@
 import "./Home.css";
+import { Link } from "react-router-dom";
+import { leerSesion } from "../lib/sesion";
+import HomeUsuario from "./HomeUsuario";
+
+// ---------- Datos de ejemplo (reemplazar por datos reales / API) ----------
+
+interface Lot {
+  id: string;
+  title: string;
+  category: string;
+  currentBid: string;
+  bids: number;
+  endsAt: number; // timestamp
+  hash: string;
+}
 
 
 
@@ -67,6 +82,10 @@ function IconBolt() {
 // ---------- Página ----------
 
 export default function Home() {
+  // Con sesión se muestra el home personalizado; sin sesión, el público.
+  const sesion = leerSesion();
+  if (sesion) return <HomeUsuario sesion={sesion} />;
+
   return (
     <div className="bh">
       

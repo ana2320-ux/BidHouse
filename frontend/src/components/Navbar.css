@@ -28,7 +28,7 @@
 }
 
 .bh-nav a:hover {
-  color: var(--blue);
+  color: var(--gold);
 }
 
 .bh-header {
@@ -55,8 +55,11 @@
   justify-self: start;
 }
 
-/* Botones de auth en el navbar */
+/* Botones de auth en el navbar.
+   grid-column: 3 lo fija a la columna derecha aunque no exista el <nav> del
+   centro (con sesión no se dibuja); si no, la grilla lo correría al medio. */
 .bh-auth-actions {
+  grid-column: 3;
   justify-self: end;
   display: flex;
   align-items: center;
@@ -76,4 +79,103 @@
   align-items: center;
   line-height: 1;
   border-radius: 10px;
+}
+/* ── Usuario con sesión: nombre + menú desplegable ── */
+.bh-usuario {
+  position: relative; /* el menú se posiciona respecto a este contenedor */
+}
+
+.bh-usuario__boton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.bh-usuario__boton:hover,
+.bh-usuario__boton[aria-expanded="true"] {
+  border-color: var(--border);
+  background: var(--gray-light);
+}
+
+.bh-usuario__avatar {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--blue-dark);
+  color: var(--white);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.bh-usuario__flecha {
+  font-size: 0.75rem;
+  color: var(--gray-mid);
+}
+
+.bh-usuario__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 230px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 35, 53, 0.12);
+  z-index: 20;
+}
+
+.bh-usuario__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.bh-usuario__cabecera span {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+  overflow-wrap: anywhere;
+}
+
+.bh-usuario__menu a,
+.bh-usuario__salir {
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--ink);
+  text-align: left;
+}
+
+.bh-usuario__menu a:hover,
+.bh-usuario__salir:hover {
+  background: var(--gray-light);
+}
+
+.bh-usuario__salir {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+  color: #b42318;
 }

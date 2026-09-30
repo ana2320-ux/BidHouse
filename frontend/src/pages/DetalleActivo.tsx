@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, usd } from '../api';
+import { HistorialPujas, PanelPuja, type SubastaParaPujar } from '../components/Pujas';
 import './DetalleActivo.css';
 
 interface Categoria {
@@ -19,7 +20,7 @@ interface ActivoDetalle {
   categorias?: Categoria | null;
 }
 
-interface SubastaDetalle {
+interface SubastaDetalle extends SubastaParaPujar {
   id: string;
   titulo: string;
   descripcion?: string | null;
@@ -114,6 +115,15 @@ export default function DetalleActivo() {
   const [idCargado, setIdCargado] = useState<string | null>(null);
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [error, setError] = useState(false);
+  // Cambiar "version" vuelve a pedir la subasta (y el historial de pujas).
+  // Se sube después de pujar y cada 15 s, para ver pujas de otras personas.
+  const [version, setVersion] = useState(0);
+  const recargar = () => setVersion((v) => v + 1);
+
+  useEffect(() => {
+    const intervalo = setInterval(() => setVersion((v) => v + 1), 15000);
+    return () => clearInterval(intervalo);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -142,7 +152,7 @@ export default function DetalleActivo() {
     return () => {
       vigente = false;
     };
-  }, [id]);
+  }, [id, version]);
 
   const activo = subasta?.activos ?? null;
   const verificado = activo?.esta_verificado === true;
@@ -153,7 +163,6 @@ export default function DetalleActivo() {
   const imagen = activo?.imagenes?.[0];
   const valoracion = activo?.precio_estimado ?? subasta?.precio_base;
   const descripcion = subasta?.descripcion || activo?.descripcion;
-  const estadoActivo = subasta?.estado?.toLowerCase() === 'activa' || subasta?.esta_activa === true;
 
   if (id && (cargando || idCargado !== id)) {
     return <main className="detail-state"><p>Consultando activo...</p></main>;
@@ -199,7 +208,7 @@ export default function DetalleActivo() {
 
           <section className="detail-card documentation-card">
             <div className="detail-card__heading">
-              <span className="detail-icon" aria-hidden="true">⌑</span>
+              <span className="detail-icon" aria-hidden="true"> </span>
               <h2>Documentación Autenticada</h2>
             </div>
             <p>
@@ -215,7 +224,7 @@ export default function DetalleActivo() {
 
           <section className="detail-card specifications-card">
             <div className="detail-card__heading">
-              <span className="detail-icon" aria-hidden="true">▦</span>
+              <span className="detail-icon" aria-hidden="true"> </span>
               <h2>Especificaciones Técnicas</h2>
             </div>
             <dl className="specifications-grid">
@@ -243,10 +252,10 @@ export default function DetalleActivo() {
             {subasta.oferta_actual_mas_alta != null && (
               <span className="valuation-card__current">Oferta actual: {dinero(subasta.oferta_actual_mas_alta)}</span>
             )}
-            <button type="button" className="detail-button detail-button--primary">
-              <span aria-hidden="true">⌕</span> {estadoActivo ? 'Participar en la subasta' : 'Comprar de forma segura'}
-            </button>
+            <PanelPuja subasta={subasta} alPujar={recargar} />
           </section>
+
+          <HistorialPujas subastaId={subasta.id} version={version} />
 
           <section className="detail-card transaction-card">
             <div className="detail-card__heading">
