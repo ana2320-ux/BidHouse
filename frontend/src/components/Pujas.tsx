@@ -371,7 +371,15 @@ function BotonComprar({ subasta, etiqueta, principal = false, alComprar }: {
 // ── Historial de pujas ──
 // "version" cambia cada vez que DetalleActivo refresca: así el historial se
 // vuelve a pedir junto con la subasta (después de pujar y cada 15 s).
-export function HistorialPujas({ subastaId, version }: { subastaId: string; version: number }) {
+// estado/fechaFin/esMiPublicacion solo deciden el texto de "sin pujas": no se
+// invita a pujar en una subasta cerrada ni en la publicación propia.
+export function HistorialPujas({ subastaId, version, estado, fechaFin, esMiPublicacion }: {
+  subastaId: string;
+  version: number;
+  estado?: string | null;
+  fechaFin?: string | null;
+  esMiPublicacion: boolean;
+}) {
   const [pujas, setPujas] = useState<Puja[] | null>(null);
   const [error, setError] = useState(false);
   const ahora = useAhora();
@@ -399,7 +407,15 @@ export function HistorialPujas({ subastaId, version }: { subastaId: string; vers
         <h2>Historial de pujas</h2>
       </div>
       {error && <p className="pujas-historial__vacio">No se pudo cargar el historial.</p>}
-      {!error && pujas?.length === 0 && <p className="pujas-historial__vacio">Aún no hay pujas. ¡Sé el primero!</p>}
+      {!error && pujas?.length === 0 && (
+        <p className="pujas-historial__vacio">
+          {estado !== 'activa' || (!!fechaFin && new Date(fechaFin).getTime() <= ahora)
+            ? 'La subasta cerró sin pujas.'
+            : esMiPublicacion
+              ? 'Todavía nadie ha pujado.'
+              : 'Aún no hay pujas. ¡Sé el primero!'}
+        </p>
+      )}
       {pujas && pujas.length > 0 && (
         <ol className="pujas-historial__lista">
           {pujas.map((p, i) => (

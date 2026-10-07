@@ -1,9 +1,11 @@
 package com.bidhouse.demo.Controladores;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,5 +44,18 @@ public class ControladorContratos {
     public Map<String, Object> reportarProblema(@PathVariable String id, @AuthenticationPrincipal Jwt jwt,
                                                 @RequestBody Map<String, String> cuerpo) {
         return servicioContratos.reportarProblema(id, jwt.getSubject(), cuerpo.get("motivo"));
+    }
+
+    // Comprador o vendedor: el chat del contrato, del más viejo al más nuevo.
+    @GetMapping("/{id}/mensajes")
+    public List<Map<String, Object>> mensajes(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+        return servicioContratos.mensajes(id, jwt.getSubject());
+    }
+
+    // Comprador o vendedor: { "texto": "¿Te queda bien que lo envíe el lunes?" }
+    @PostMapping("/{id}/mensajes")
+    public Map<String, Object> enviarMensaje(@PathVariable String id, @AuthenticationPrincipal Jwt jwt,
+                                             @RequestBody Map<String, String> cuerpo) {
+        return servicioContratos.enviarMensaje(id, jwt.getSubject(), cuerpo.get("texto"));
     }
 }

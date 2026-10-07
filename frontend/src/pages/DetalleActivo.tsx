@@ -165,6 +165,8 @@ export default function DetalleActivo() {
   const imagen = activo?.imagenes?.[0];
   const valoracion = activo?.precio_estimado ?? subasta?.precio_base;
   const descripcion = subasta?.descripcion || activo?.descripcion;
+  const precioFijo = subasta?.permite_pujas === false;
+  const hayPujas = (subasta?.total_pujas ?? 0) > 0;
 
   if (id && (cargando || idCargado !== id)) {
     return <main className="detail-state"><p>Consultando activo...</p></main>;
@@ -250,15 +252,31 @@ export default function DetalleActivo() {
           {descripcion && <p className="detail-description">{descripcion}</p>}
 
           <section className="detail-card valuation-card">
-            <span className="detail-label">Valoración Estimada</span>
-            <strong className="valuation-card__amount">{dinero(valoracion)}</strong>
-            {subasta.oferta_actual_mas_alta != null && (
-              <span className="valuation-card__current">Oferta actual: {dinero(subasta.oferta_actual_mas_alta)}</span>
+            {/* Precio fijo no tiene ofertas: lo que importa es el precio de venta.
+                En subasta, "Precio base" hasta la primera puja y luego "Puja más alta". */}
+            <span className="detail-label">{precioFijo ? 'Precio de venta' : 'Valoración Estimada'}</span>
+            <strong className="valuation-card__amount">
+              {dinero(precioFijo ? subasta.precio_compra_inmediata ?? subasta.precio_base : valoracion)}
+            </strong>
+            {!precioFijo && subasta.oferta_actual_mas_alta != null && (
+              <span className="valuation-card__current">
+                {hayPujas
+                  ? `Puja más alta: ${dinero(subasta.oferta_actual_mas_alta)}`
+                  : `Precio base: ${dinero(subasta.precio_base ?? subasta.oferta_actual_mas_alta)}`}
+              </span>
             )}
             <PanelPuja subasta={subasta} alPujar={recargar} />
           </section>
 
-          <HistorialPujas subastaId={subasta.id} version={version} />
+          {!precioFijo && (
+            <HistorialPujas
+              subastaId={subasta.id}
+              version={version}
+              estado={subasta.estado}
+              fechaFin={subasta.fecha_fin}
+              esMiPublicacion={subasta.esMiPublicacion === true}
+            />
+          )}
 
           <section className="detail-card transaction-card">
             <div className="detail-card__heading">

@@ -1,0 +1,110 @@
+/* ── Chat del contrato (debajo del panel de pago, en el detalle) ── */
+.chat-contrato {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.chat-contrato__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-contrato__cabecera strong {
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+
+.chat-contrato__cabecera span,
+.chat-contrato__vacio {
+  font-size: 0.78rem;
+  color: var(--gray-mid);
+}
+
+.chat-contrato__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--gray-light);
+}
+
+.chat-contrato__burbuja {
+  align-self: flex-start;
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--white);
+  border: 1px solid var(--border);
+}
+
+.chat-contrato__burbuja--mia {
+  align-self: flex-end;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--white);
+}
+
+.chat-contrato__burbuja p {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-contrato__burbuja time {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.chat-contrato__error {
+  font-size: 0.8rem;
+  color: #b42318;
+}
+
+.chat-contrato__form {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-contrato__form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.chat-contrato__form input:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+.chat-contrato__form button {
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--blue-dark);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-contrato__form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
