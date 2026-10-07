@@ -1,0 +1,12 @@
+.premium-page { min-height: calc(100vh - 76px); padding: 60px 0 90px; background: #f7f9fb; }
+.premium-page__header { display: grid; justify-items: center; gap: 12px; margin-bottom: 38px; text-align: center; }
+.premium-page__header h1 { font-size: clamp(2rem, 4vw, 3rem); }
+.premium-page__header p { max-width: 640px; color: var(--gray-mid); font-size: 1.05rem; }
+.premium-page__error { margin-bottom: 22px; padding: 12px 16px; border-radius: 10px; background: #fee2e2; color: #991b1b; }
+.premium-page__loading, .premium-page__empty { padding: 40px; text-align: center; color: var(--gray-mid); }
+.premium-page__empty { border: 1px dashed var(--border); border-radius: 14px; background: var(--white); }
+.premium-page__empty h2 { margin-bottom: 8px; }
+.premium-page__empty .btn { display: inline-block; margin-top: 20px; }
+.premium-page__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .premium-page__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .premium-page { padding-top: 38px; } .premium-page__grid { grid-template-columns: 1fr; } }

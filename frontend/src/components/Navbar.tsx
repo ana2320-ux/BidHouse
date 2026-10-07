@@ -59,6 +59,7 @@ export default function Navbar() {
             {/* Cambiamos las <a> por <Link> y los 'href' por 'to' */}
             <Link to="/catalogo">Catalogo</Link>
             <Link to="/como-funciona">Cómo funciona</Link>
+            <Link to="/premium">Premium</Link>
             <Link to="/vender">Vender un activo</Link>
           </nav>
         )}
@@ -70,6 +71,9 @@ export default function Navbar() {
             <>
               <Link to="/catalogo" className="btn btn--outline btn--sm">
                 Catálogo
+              </Link>
+              <Link to="/premium" className="btn btn--primary btn--sm bh-auth-actions__premium">
+                Premium
               </Link>
 
               <div className="bh-usuario" ref={menuRef}>

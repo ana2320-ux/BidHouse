@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
+import { leerSesion } from '../lib/sesion';
 import SubastaCard, { type SubastaCardData } from '../components/SubastaCard';
 import './Catalogo.css';
 
@@ -19,11 +20,17 @@ export default function Catalogo() {
   const [params] = useSearchParams();
   const [filtro, setFiltro] = useState(params.get('categoria') ?? TODOS);
   const [error, setError] = useState(false);
+  const haySesion = Boolean(leerSesion());
+  const [membresiaActiva, setMembresiaActiva] = useState<boolean | null>(() => haySesion ? null : false);
 
   useEffect(() => {
     api<SubastaCardData[]>('/api/subastas').then(setSubastas).catch(() => setError(true));
     api<Categoria[]>('/api/categorias').then(setCategorias).catch(() => setError(true));
-  }, []);
+    if (!haySesion) return;
+    api<{ activa: boolean }>('/api/membresias/estado')
+      .then((estado) => setMembresiaActiva(estado.activa))
+      .catch(() => setMembresiaActiva(false));
+  }, [haySesion]);
 
   const visibles = (subastas ?? []).filter(
     (s) => filtro === TODOS || s.activos?.categorias?.nombre === filtro,
@@ -68,7 +75,13 @@ export default function Catalogo() {
 
       {/* Grid de Tarjetas */}
       <div className="catalog-grid">
-        {visibles.map((item) => <SubastaCard key={item.id} subasta={item} />)}
+        {visibles.map((item) => (
+          <SubastaCard
+            key={item.id}
+            subasta={item}
+            bloquearPremium={Boolean(item.es_premium && haySesion && membresiaActiva === false)}
+          />
+        ))}
       </div>
     </main>
   );

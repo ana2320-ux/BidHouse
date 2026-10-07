@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
 import { leerSesion } from '../lib/sesion';
 import { PagoContrato, type MiContrato } from './PagoContrato';
+import PremiumModal from './PremiumModal';
 import './Pujas.css';
 
 // Lo que PanelPuja necesita de GET /api/subastas/{id} (ver ServicioSubasta.obtenerDetalle()).
@@ -16,6 +17,8 @@ export interface SubastaParaPujar {
   total_pujas?: number | null;
   permite_pujas?: boolean | null;
   precio_compra_inmediata?: number | null;
+  es_premium?: boolean;
+  tieneMembresia?: boolean;
   esMiPublicacion?: boolean;
   voyGanando?: boolean;
   pujaMinima?: number | null;
@@ -122,6 +125,7 @@ export function PanelPuja({ subasta, alPujar }: { subasta: SubastaParaPujar; alP
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
+  const [premiumModal, setPremiumModal] = useState(false);
   const ahora = useAhora();
 
   const cerrada = !!subasta.fecha_fin && new Date(subasta.fecha_fin).getTime() <= ahora;
@@ -143,6 +147,18 @@ export function PanelPuja({ subasta, alPujar }: { subasta: SubastaParaPujar; alP
   const precioFijo = subasta.permite_pujas === false;
   // "Cómpralo ya" del mixto: solo mientras nadie ha pujado (la BD lo vuelve a revisar).
   const compraloYa = !precioFijo && subasta.precio_compra_inmediata != null && (subasta.total_pujas ?? 0) === 0;
+
+  if (subasta.es_premium && subasta.tieneMembresia !== true) {
+    return (
+      <div className="puja-panel">
+        <p className="puja-panel__nota">Esta subasta está reservada para miembros BidLuxury.</p>
+        <button type="button" className="detail-button detail-button--primary" onClick={() => setPremiumModal(true)}>
+          Ver membresía
+        </button>
+        <PremiumModal abierto={premiumModal} alCerrar={() => setPremiumModal(false)} />
+      </div>
+    );
+  }
 
   if (!sesion) {
     return (

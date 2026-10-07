@@ -31,6 +31,8 @@ interface SubastaDetalle extends SubastaParaPujar {
   fecha_fin?: string | null;
   estado?: string | null;
   esta_activa?: boolean | null;
+  es_premium?: boolean;
+  tieneMembresia?: boolean;
   activos?: ActivoDetalle | null;
 }
 
@@ -240,6 +242,7 @@ export default function DetalleActivo() {
 
         <section className="detail-column detail-column--summary" aria-label="Resumen de la subasta">
           <div className="detail-badges">
+            {subasta.es_premium && <span className="detail-pill detail-pill--premium">★ Subasta Premium</span>}
             <span className="detail-pill detail-pill--blue">{verificado ? 'Activo verificado' : 'Verificación pendiente'}</span>
             <span className="detail-pill detail-pill--gold">{textoEstado(subasta.estado)}</span>
           </div>

@@ -149,10 +149,17 @@
 }
 
 .catalog-card__image-wrapper {
+  position: relative;
   width: 100%;
   height: 220px;
   overflow: hidden;
   background: #111;
+}
+
+.catalog-card__premium {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
 .catalog-card__image-wrapper img {

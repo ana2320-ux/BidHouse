@@ -26,6 +26,7 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
   const [tarjetas, setTarjetas] = useState<TarjetaCategoria[] | null>(null);
   const [subastas, setSubastas] = useState<SubastaCatalogo[]>([]);
   const [preferencias, setPreferencias] = useState<string[] | null>(null);
+  const [membresiaActiva, setMembresiaActiva] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -43,6 +44,9 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
     api<{ categoriaIds: string[] }>('/api/usuarios/preferencias')
       .then((respuesta) => setPreferencias(respuesta.categoriaIds ?? []))
       .catch(() => setPreferencias([]));
+    api<{ activa: boolean }>('/api/membresias/estado')
+      .then((respuesta) => setMembresiaActiva(respuesta.activa))
+      .catch(() => setMembresiaActiva(false));
   }, []);
 
   const recomendadas = subastas.filter((subasta) => {
@@ -145,7 +149,13 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
           </div>
           {recomendadas.length > 0 ? (
             <div className="catalog-grid inicio-recomendadas__grid">
-              {recomendadas.map((subasta) => <SubastaCard key={subasta.id} subasta={subasta} />)}
+              {recomendadas.map((subasta) => (
+                <SubastaCard
+                  key={subasta.id}
+                  subasta={subasta}
+                  bloquearPremium={Boolean(subasta.es_premium && !membresiaActiva)}
+                />
+              ))}
             </div>
           ) : (
             <div className="inicio-recomendadas__vacio">
@@ -164,6 +174,17 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
           <Link to="/preferencias" className="inicio-acceso__boton">Elegir preferencias</Link>
         </section>
       )}
+
+      <section className="bh-container inicio-premium">
+        <div>
+          <p className="inicio-premium__eyebrow">BIDLUXURY MEMBER</p>
+          <h2>{membresiaActiva ? 'Subastas Premium para ti' : 'Descubre BidLuxury Member'}</h2>
+          <p>{membresiaActiva ? 'Explora activos seleccionados y participa en oportunidades exclusivas.' : 'Accede a activos exclusivos y participa en subastas reservadas para miembros.'}</p>
+        </div>
+        <Link to={membresiaActiva ? '/premium' : '/membresia'} className="inicio-acceso__boton">
+          {membresiaActiva ? 'Explorar subastas premium' : 'Conocer beneficios'}
+        </Link>
+      </section>
 
       {/* ── Servicios ── */}
       <section className="bh-container inicio-servicios">

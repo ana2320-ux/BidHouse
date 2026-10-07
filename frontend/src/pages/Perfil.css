@@ -477,6 +477,40 @@
   background: var(--gold);
 }
 
+.perfil-membresia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 32px;
+  padding: 22px 26px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+.perfil-membresia--activa {
+  border-color: rgba(201, 143, 13, .6);
+  background: #fffaf0;
+}
+
+.perfil-membresia__eyebrow {
+  margin-bottom: 5px;
+  color: var(--gold-dark);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.perfil-membresia h2 { margin-bottom: 5px; font-size: 1.35rem; }
+.perfil-membresia p:last-child { color: var(--gray-mid); }
+.perfil-membresia__titulo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.perfil-membresia__titulo h2 { margin: 0; }
+
+@media (max-width: 640px) {
+  .perfil-membresia { align-items: stretch; flex-direction: column; }
+}
+
 @media (max-width: 800px) {
   .profile-dashboard {
     grid-template-columns: 1fr;

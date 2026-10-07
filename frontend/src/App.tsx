@@ -11,6 +11,9 @@ import DetalleActivo from './pages/DetalleActivo';
 import VerificacionKYC from './pages/VerificacionKYC';
 import RetornoPago from './pages/RetornoPago';
 import Preferencias from './pages/Preferencias';
+import Membresia from './pages/Membresia';
+import MembresiaResultado from './pages/MembresiaResultado';
+import SubastasPremium from './pages/SubastasPremium';
 
 
 // Pantallas de acceso a pantalla completa (estilo Amazon): sin navbar para
@@ -35,6 +38,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/preferencias" element={<Preferencias />} />
+        <Route path="/membresia" element={<Membresia />} />
+        <Route path="/membresia/resultado" element={<MembresiaResultado />} />
+        <Route path="/premium" element={<SubastasPremium />} />
         <Route path="/vender" element={<Vender />} />
         {/* Vuelta desde Mercado Pago ("Volver al sitio") */}
         <Route path="/pagos/retorno" element={<RetornoPago />} />

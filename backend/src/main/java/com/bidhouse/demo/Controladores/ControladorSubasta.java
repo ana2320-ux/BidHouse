@@ -35,6 +35,11 @@ public class ControladorSubasta {
         return servicioSubasta.listarCatalogo();
     }
 
+    @GetMapping("/subastas/premium")
+    public List<Map<String, Object>> premium() {
+        return servicioSubasta.listarPremium();
+    }
+
     // Pública, pero si llega con token se sabe quién mira: jwt es null para un
     // visitante sin sesión y el servicio lo trata como anónimo.
     @GetMapping("/subastas/{id}")

@@ -1,0 +1,5 @@
+.membresia-resultado { min-height: calc(100vh - 76px); display: grid; place-items: center; padding: 32px 16px; background: #f7f9fb; }
+.membresia-resultado__card { width: min(100%, 540px); padding: 42px 32px; border: 1px solid var(--border); border-radius: 16px; background: var(--white); box-shadow: 0 16px 44px rgba(20, 35, 53, .08); text-align: center; }
+.membresia-resultado__card h1 { margin-bottom: 12px; font-size: 2rem; }
+.membresia-resultado__card p { margin-bottom: 26px; color: var(--gray-mid); }
+.membresia-resultado__icono { display: block; margin-bottom: 8px; color: var(--gold); font-size: 3rem; }

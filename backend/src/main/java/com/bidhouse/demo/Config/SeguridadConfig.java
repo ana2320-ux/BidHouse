@@ -38,7 +38,9 @@ public class SeguridadConfig {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // Públicas: ver el catálogo y entrar o crear cuenta.
                         .requestMatchers(HttpMethod.GET, "/api/status", "/api/categorias",
-                                "/api/subastas", "/api/subastas/*", "/api/subastas/*/pujas").permitAll()
+                                "/api/subastas", "/api/subastas/*", "/api/subastas/*/pujas",
+                                "/api/subastas/premium", "/api/membresias/planes").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/webhooks/mercadopago").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/registro",
                                 "/api/usuarios/existe", "/api/usuarios/login").permitAll()
                         // Todo lo demás (perfil, vender, ...) exige token válido.

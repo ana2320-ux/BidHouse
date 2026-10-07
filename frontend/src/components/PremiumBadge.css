@@ -1,0 +1,27 @@
+.premium-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 5px 9px;
+  border: 1px solid rgba(201, 143, 13, 0.55);
+  border-radius: 999px;
+  background: #fff8e5;
+  color: var(--gold-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.premium-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--gold);
+  stroke: var(--gold-dark);
+  stroke-width: 1.2;
+}
+
+.premium-badge--compacto {
+  padding: 5px;
+}

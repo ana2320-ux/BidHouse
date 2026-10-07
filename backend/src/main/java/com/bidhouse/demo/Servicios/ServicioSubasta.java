@@ -23,18 +23,33 @@ public class ServicioSubasta {
 
     private final SupabaseClient db;
     private final ServicioUsuario usuarios;
+    private final ServicioMembresia membresias;
 
-    public ServicioSubasta(SupabaseClient db, ServicioUsuario usuarios) {
+    public ServicioSubasta(SupabaseClient db, ServicioUsuario usuarios, ServicioMembresia membresias) {
         this.db = db;
         this.usuarios = usuarios;
+        this.membresias = membresias;
     }
 
     public List<Map<String, Object>> listarCatalogo() {
         // permite_pujas + precio_compra_inmediata: el catálogo muestra el modo de venta.
-        return db.consultar("/subastas?select=id,titulo,precio_base,oferta_actual_mas_alta,fecha_fin,estado,"
+        String consulta = "/subastas?select=id,titulo,precio_base,oferta_actual_mas_alta,fecha_fin,estado,es_premium,"
                 + "permite_pujas,precio_compra_inmediata,"
                 + "activos(nombre,imagenes,esta_verificado,categorias(id,nombre))"
-                + "&esta_activa=eq.true&estado=in.(pendiente,activa)&order=creado_en.desc");
+                + "&esta_activa=eq.true&estado=in.(pendiente,activa)&order=creado_en.desc";
+        return db.consultar(consulta);
+    }
+
+    public List<Map<String, Object>> listarPremium() {
+        try {
+            return db.consultar("/subastas?select=id,titulo,precio_base,oferta_actual_mas_alta,fecha_fin,estado,es_premium,"
+                    + "permite_pujas,precio_compra_inmediata,"
+                    + "activos(nombre,imagenes,esta_verificado,categorias(id,nombre))"
+                    + "&es_premium=eq.true&esta_activa=eq.true&estado=in.(pendiente,activa)&order=creado_en.desc");
+        } catch (RestClientResponseException e) {
+            if (esColumnaPremiumAusente(e)) throw errorColumnaPremiumAusente(e);
+            throw e;
+        }
     }
 
     public List<Map<String, Object>> listarCategorias() {
@@ -49,7 +64,7 @@ public class ServicioSubasta {
 
         String consulta = "/subastas?select=id,titulo,descripcion,precio_base,oferta_actual_mas_alta,"
                 + "incremento_minimo,fecha_inicio,fecha_fin,estado,esta_activa,"
-                + "permite_pujas,precio_compra_inmediata,total_pujas,vendedor_id,pujador_lider_id,"
+                + "permite_pujas,precio_compra_inmediata,total_pujas,es_premium,vendedor_id,pujador_lider_id,"
                 + "activos(id,nombre,descripcion,condicion,precio_estimado,imagenes,esta_verificado,"
                 + "categorias(id,nombre))&id=eq." + idNormalizado + "&limit=1";
 
@@ -62,6 +77,9 @@ public class ServicioSubasta {
         Object vendedor = detalle.remove("vendedor_id");
         Object lider = detalle.remove("pujador_lider_id");
         detalle.put("esMiPublicacion", idUsuario != null && idUsuario.equals(vendedor));
+        boolean esPremium = Boolean.TRUE.equals(detalle.getOrDefault("es_premium", false));
+        detalle.put("es_premium", esPremium);
+        detalle.put("tieneMembresia", idUsuario != null && esPremium && membresias.usuarioTieneMembresiaActiva(idUsuario));
         detalle.put("voyGanando", idUsuario != null && idUsuario.equals(lider));
         detalle.put("pujaMinima", pujaMinima(
                 decimal(detalle.get("precio_base")),
@@ -145,8 +163,9 @@ public class ServicioSubasta {
     // Toda la validación con la oferta actual y el guardado los hace pujar() en
     // la BD en un solo paso atómico (ver el SQL para el porqué).
     public Map<String, Object> pujar(String id, String idUsuario, NuevaPuja puja) {
-        puja.validar();
         String idNormalizado = normalizarId(id);
+        puja.validar();
+        exigirMembresiaSiPremium(idNormalizado, idUsuario);
 
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("p_subasta_id", idNormalizado);
@@ -168,7 +187,9 @@ public class ServicioSubasta {
     // en un paso atómico para que nunca se venda dos veces.
     public Map<String, Object> comprar(String id, String idUsuario) {
         Map<String, Object> parametros = new HashMap<>();
-        parametros.put("p_subasta_id", normalizarId(id));
+        String idNormalizado = normalizarId(id);
+        exigirMembresiaSiPremium(idNormalizado, idUsuario);
+        parametros.put("p_subasta_id", idNormalizado);
         parametros.put("p_comprador_id", idUsuario);
 
         Map<String, Object> contrato = llamar("comprar_ahora", parametros);
@@ -178,6 +199,33 @@ public class ServicioSubasta {
         respuesta.put("monto", contrato.get("monto"));
         respuesta.put("fechaLimitePago", contrato.get("fecha_limite_pago"));
         return respuesta;
+    }
+
+    private void exigirMembresiaSiPremium(String idSubasta, String idUsuario) {
+        List<Map<String, Object>> filas;
+        try {
+            filas = db.consultar("/subastas?id=eq." + idSubasta + "&select=es_premium&limit=1");
+        } catch (RestClientResponseException e) {
+            if (esColumnaPremiumAusente(e)) throw errorColumnaPremiumAusente(e);
+            throw e;
+        }
+        if (!filas.isEmpty() && Boolean.TRUE.equals(filas.get(0).get("es_premium"))
+                && !membresias.usuarioTieneMembresiaActiva(idUsuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Esta subasta requiere una membresía BidLuxury activa.");
+        }
+    }
+
+    private static boolean esColumnaPremiumAusente(RestClientResponseException e) {
+        return e.getResponseBodyAsString().contains("subastas.es_premium")
+                || e.getResponseBodyAsString().contains("column \"es_premium\" does not exist");
+    }
+
+    private static ResponseStatusException errorColumnaPremiumAusente(RestClientResponseException causa) {
+        return new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Falta la columna subastas.es_premium en Supabase: ejecuta backend/sql/fase6_membresias.sql.",
+                causa);
     }
 
     // Llama una función de la BD y convierte su error en uno con sentido para el front.
