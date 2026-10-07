@@ -1,0 +1,85 @@
+<!--
+  Plantilla del correo "Confirm signup" de Supabase.
+  Dónde va: Supabase → Authentication → Emails → Templates → Confirm signup.
+  Asunto sugerido: Tu código de verificación de BidLuxury
+
+  Va todo en tablas y con estilos en línea porque Gmail y Outlook ignoran
+  <style> y casi todo el CSS moderno. {{ .Token }} y {{ .Email }} los
+  reemplaza Supabase al enviar.
+-->
+<!doctype html>
+<html lang="es">
+<body style="margin:0;padding:0;background:#eef1f5;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f5;padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#142335;">
+
+          <!-- Encabezado -->
+          <tr>
+            <td style="background:#0b2640;background-image:linear-gradient(160deg,#0b2640 0%,#0f3f66 60%,#123a5e 100%);padding:32px 40px;text-align:center;">
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#ffffff;letter-spacing:0.5px;">
+                Bid<span style="color:#f5b41b;">Luxury</span>
+              </div>
+              <div style="font-size:12px;color:#9fb6cc;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">
+                Subastas verificadas
+              </div>
+            </td>
+          </tr>
+
+          <!-- Cuerpo -->
+          <tr>
+            <td style="padding:40px 40px 8px;">
+              <h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:24px;color:#142335;">
+                Confirma tu correo
+              </h1>
+              <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#4a5866;">
+                Estás a un paso de entrar a BidLuxury. Escribe este código en la pantalla de registro para activar tu cuenta.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Código -->
+          <tr>
+            <td align="center" style="padding:0 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="background:#fbf6e9;border:1px solid #f0dca6;border-radius:10px;">
+                <tr>
+                  <td style="padding:20px 32px;font-family:'Courier New',Courier,monospace;font-size:34px;font-weight:bold;letter-spacing:8px;color:#0f3f66;text-align:center;">
+                    {{ .Token }}
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:14px 0 0;font-size:13px;color:#8a94a0;">
+                El código vence pronto. Si expiró, pide uno nuevo con <strong>Reenviar código</strong>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Seguridad -->
+          <tr>
+            <td style="padding:32px 40px 36px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e1e5ea;">
+                <tr>
+                  <td style="padding-top:20px;font-size:13px;line-height:1.6;color:#8a94a0;">
+                    Si no creaste una cuenta con <strong style="color:#4a5866;">{{ .Email }}</strong>, ignora este mensaje: nadie podrá usarla sin este código.
+                    Nunca te pediremos este código por teléfono ni por chat.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Pie -->
+          <tr>
+            <td style="background:#f4f5f7;padding:20px 40px;text-align:center;font-size:12px;color:#8a94a0;">
+              Custodia en escrow · Procedencia en blockchain · Liquidación segura<br>
+              © 2026 BidLuxury
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
