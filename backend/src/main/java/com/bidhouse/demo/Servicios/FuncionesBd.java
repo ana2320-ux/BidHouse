@@ -92,6 +92,8 @@ final class FuncionesBd {
                     "Este contrato ya no admite ese cambio (ya se completó, se canceló o está en disputa).");
             case "USUARIO_NO_EXISTE" -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Tu cuenta no tiene un perfil asociado. Contacta a soporte.");
+            case "CATEGORIA_INVALIDA" -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Una de las categorías seleccionadas no existe o no está disponible.");
             default -> new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "No se pudo completar la operación. Intenta de nuevo.", causa);
         };

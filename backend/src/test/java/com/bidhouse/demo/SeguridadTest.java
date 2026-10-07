@@ -37,6 +37,14 @@ class SeguridadTest {
     }
 
     @Test
+    void lasPreferenciasSinTokenDan401() throws Exception {
+        mvc.perform(get("/api/usuarios/preferencias")).andExpect(status().isUnauthorized());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/usuarios/preferencias")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"categoriaIds\":[]}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void unTokenFalsoDa401() throws Exception {
         mvc.perform(get("/api/usuarios/perfil").header("Authorization", "Bearer esto.no.es-un-jwt"))
                 .andExpect(status().isUnauthorized());

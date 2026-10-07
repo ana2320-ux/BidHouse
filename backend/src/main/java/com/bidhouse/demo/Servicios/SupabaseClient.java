@@ -189,7 +189,14 @@ public class SupabaseClient {
         } catch (RuntimeException noEsJson) {
             cuerpo = null;
         }
-        String codigo = cuerpo == null ? "" : String.valueOf(cuerpo.get("error_code"));
+        // Supabase usa error_code en unas respuestas y code en otras versiones
+        // de GoTrue; ambos deben llegar al mismo mensaje de la aplicación.
+        String codigo = "";
+        if (cuerpo != null) {
+            Object codigoError = cuerpo.get("error_code");
+            Object codigoAlterno = cuerpo.get("code");
+            codigo = String.valueOf(codigoError == null ? codigoAlterno : codigoError);
+        }
 
         return switch (codigo) {
             case "user_already_exists", "email_exists" ->

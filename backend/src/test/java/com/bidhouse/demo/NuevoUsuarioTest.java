@@ -12,7 +12,7 @@ import com.bidhouse.demo.Modelos.NuevoUsuario;
 class NuevoUsuarioTest {
 
     private static NuevoUsuario con(String email, String password) {
-        return new NuevoUsuario("Ana", "Pérez", "1020304050", "3001234567", email,
+        return new NuevoUsuario("Ana", "Pérez", "1020304050", "+573001234567", email,
                 "Calle 1 # 2-3", "Bogotá", "Colombia", false, password);
     }
 
@@ -24,7 +24,7 @@ class NuevoUsuarioTest {
     @Test
     void rechazaCamposVaciosOLargos() {
         var sinNombre = new NuevoUsuario(" ", "Pérez", "1", "3", "ana@gmail.com", "x", "x", "x", false, "Clave#1");
-        var telefonoLargo = new NuevoUsuario("Ana", "Pérez", "1", "1".repeat(21), "ana@gmail.com", "x", "x", "x", false, "Clave#1");
+        var telefonoLargo = new NuevoUsuario("Ana", "Pérez", "1", "+57" + "1".repeat(19), "ana@gmail.com", "x", "x", "x", false, "Clave#1");
         assertThatThrownBy(sinNombre::validar).isInstanceOf(ResponseStatusException.class);
         assertThatThrownBy(telefonoLargo::validar).isInstanceOf(ResponseStatusException.class);
     }

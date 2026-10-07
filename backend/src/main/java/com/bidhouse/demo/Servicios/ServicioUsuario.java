@@ -14,7 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bidhouse.demo.Modelos.Credenciales;
+import com.bidhouse.demo.Modelos.DatosPerfilRegistro;
 import com.bidhouse.demo.Modelos.NuevoUsuario;
+import com.bidhouse.demo.Modelos.PreferenciasUsuario;
 
 @Service
 public class ServicioUsuario {
@@ -148,6 +150,65 @@ public class ServicioUsuario {
         return Map.of("imagenUrl", urlVersionada);
     }
 
+    // ── Perfil después de confirmar correo ──
+    // Supabase Auth puede crear la cuenta desde el navegador para poder usar el
+    // código OTP. Este paso, ya autenticado, deja la fila de negocio ligada al
+    // mismo sub del JWT y es idempotente si un trigger ya la creó.
+    public Map<String, Object> asegurarPerfil(String id, DatosPerfilRegistro datos) {
+        validarDatosPerfil(datos);
+        List<Map<String, Object>> existentes = db.consultar("/usuarios?id=eq." + id + "&select=id&limit=1");
+        if (existentes.isEmpty()) {
+            Map<String, Object> fila = new LinkedHashMap<>();
+            fila.put("id", id);
+            fila.put("nombre", datos.nombre().strip());
+            fila.put("apellido", datos.apellido().strip());
+            fila.put("email", datos.email().strip().toLowerCase());
+            fila.put("documento_identidad", datos.documentoIdentidad().strip());
+            fila.put("telefono", NuevoUsuario.normalizarTelefono(datos.telefono()));
+            fila.put("direccion", datos.direccion().strip());
+            fila.put("ciudad", datos.ciudad().strip());
+            fila.put("pais", datos.pais().strip());
+            fila.put("es_vendedor", datos.esVendedor());
+            fila.put("esta_verificado", true);
+            try {
+                db.insertar("usuarios", fila);
+            } catch (RestClientResponseException e) {
+                if (e.getStatusCode().value() == 409) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            mensajeDuplicado(e.getResponseBodyAsString()), e);
+                }
+                throw e;
+            }
+        }
+        return Map.of("id", id);
+    }
+
+    // ── Preferencias ──
+    public Map<String, Object> preferencias(String id) {
+        try {
+            List<Map<String, Object>> filas = db.consultar("/usuario_preferencias?usuario_id=eq." + id
+                    + "&select=categoria_id&order=categoria_id");
+            List<String> ids = filas.stream().map(f -> String.valueOf(f.get("categoria_id"))).toList();
+            return Map.of("categoriaIds", ids);
+        } catch (RestClientResponseException e) {
+            throw errorSiFaltaTabla(e, "usuario_preferencias");
+        }
+    }
+
+    public Map<String, Object> actualizarPreferencias(String id, PreferenciasUsuario solicitud) {
+        List<String> ids = solicitud == null ? List.of() : solicitud.idsNormalizados();
+        try {
+            Map<String, Object> parametros = new LinkedHashMap<>();
+            parametros.put("p_usuario_id", id);
+            parametros.put("p_categoria_ids", ids);
+            return FuncionesBd.llamar(db, "reemplazar_preferencias", parametros);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (RestClientResponseException e) {
+            throw errorSiFaltaTabla(e, "usuario_preferencias");
+        }
+    }
+
     // ── Registro ──
     // Son DOS escrituras contra DOS APIs distintas de Supabase, y entre ellas no
     // hay transacción (no se puede hacer "rollback" de una llamada HTTP):
@@ -168,7 +229,7 @@ public class ServicioUsuario {
         fila.put("apellido", n.apellido().strip());
         fila.put("email", email);
         fila.put("documento_identidad", n.documentoIdentidad().strip());
-        fila.put("telefono", n.telefono().strip());
+        fila.put("telefono", NuevoUsuario.normalizarTelefono(n.telefono()));
         fila.put("direccion", n.direccion().strip());
         fila.put("ciudad", n.ciudad().strip());
         fila.put("pais", n.pais().strip());
@@ -250,5 +311,38 @@ public class ServicioUsuario {
         respuesta.put("expiraEn", sesion.get("expires_in")); // segundos (3600 = 1 hora)
         respuesta.put("usuario", filas.get(0));
         return respuesta;
+    }
+
+    private static void validarDatosPerfil(DatosPerfilRegistro d) {
+        if (d == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Faltan los datos del perfil");
+        }
+        obligatorio(d.nombre(), 100, "El nombre");
+        obligatorio(d.apellido(), 100, "El apellido");
+        obligatorio(d.documentoIdentidad(), 50, "El documento de identidad");
+        obligatorio(d.email(), 255, "El correo electrónico");
+        obligatorio(d.direccion(), Integer.MAX_VALUE, "La dirección");
+        obligatorio(d.ciudad(), 100, "La ciudad");
+        obligatorio(d.pais(), 100, "El país");
+        NuevoUsuario.normalizarTelefono(d.telefono());
+    }
+
+    private static void obligatorio(String valor, int maximo, String campo) {
+        if (valor == null || valor.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, campo + " es obligatorio");
+        }
+        if (valor.strip().length() > maximo) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    campo + " no puede tener más de " + maximo + " caracteres");
+        }
+    }
+
+    private static ResponseStatusException errorSiFaltaTabla(RestClientResponseException e, String tabla) {
+        if (e.getResponseBodyAsString().contains("PGRST205")
+                || e.getResponseBodyAsString().contains("42P01")) {
+            return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Falta crear la tabla " + tabla + ". Corre backend/sql/fase5_preferencias.sql en Supabase.", e);
+        }
+        throw e;
     }
 }

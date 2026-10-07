@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bidhouse.demo.Modelos.Credenciales;
+import com.bidhouse.demo.Modelos.DatosPerfilRegistro;
 import com.bidhouse.demo.Modelos.NuevoUsuario;
+import com.bidhouse.demo.Modelos.PreferenciasUsuario;
 import com.bidhouse.demo.Servicios.ServicioUsuario;
 
 @RestController
@@ -49,6 +51,25 @@ public class ControladorUsuario {
     public Map<String, Object> cambiarFoto(@AuthenticationPrincipal Jwt jwt,
                                            @RequestParam("foto") MultipartFile foto) {
         return servicioUsuario.cambiarFoto(jwt.getSubject(), foto);
+    }
+
+    // Se usa después de confirmar el correo cuando el alta inicial se hizo desde
+    // Supabase Auth. El JWT garantiza que el perfil solo se crea para su dueño.
+    @PostMapping("/perfil/registro")
+    public Map<String, Object> completarPerfil(@AuthenticationPrincipal Jwt jwt,
+                                                @RequestBody DatosPerfilRegistro datos) {
+        return servicioUsuario.asegurarPerfil(jwt.getSubject(), datos);
+    }
+
+    @GetMapping("/preferencias")
+    public Map<String, Object> preferencias(@AuthenticationPrincipal Jwt jwt) {
+        return servicioUsuario.preferencias(jwt.getSubject());
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/preferencias")
+    public Map<String, Object> actualizarPreferencias(@AuthenticationPrincipal Jwt jwt,
+                                                       @RequestBody PreferenciasUsuario preferencias) {
+        return servicioUsuario.actualizarPreferencias(jwt.getSubject(), preferencias);
     }
 
     // POST /api/usuarios/registro → 201 Created. @RequestBody le pide a Spring

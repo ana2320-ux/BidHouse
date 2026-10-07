@@ -26,6 +26,7 @@ public record NuevoUsuario(
     private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final Pattern MAYUSCULA = Pattern.compile("[A-ZÁÉÍÓÚÜÑ]");
     private static final Pattern SIMBOLO = Pattern.compile("[.$*#@!=+]");
+    private static final Pattern TELEFONO = Pattern.compile("^\\+[1-9]\\d{7,14}$");
 
     public void validar() {
         // Los máximos son los de las columnas varchar(n) de la tabla "usuarios":
@@ -33,7 +34,8 @@ public record NuevoUsuario(
         obligatorio(nombre, 100, "El nombre");
         obligatorio(apellido, 100, "El apellido");
         obligatorio(documentoIdentidad, 50, "El documento de identidad");
-        obligatorio(telefono, 20, "El teléfono");
+        obligatorio(telefono, Integer.MAX_VALUE, "El teléfono");
+        normalizarTelefono(telefono);
         obligatorio(email, 255, "El correo electrónico");
         if (!EMAIL.matcher(email.strip()).matches()) error("El correo electrónico no tiene un formato válido");
         obligatorio(direccion, Integer.MAX_VALUE, "La dirección"); // columna text: sin máximo
@@ -43,6 +45,16 @@ public record NuevoUsuario(
         if (password == null || password.length() < 6) error("La contraseña debe tener al menos 6 caracteres");
         if (!MAYUSCULA.matcher(password).find()) error("La contraseña debe tener al menos una mayúscula");
         if (!SIMBOLO.matcher(password).find()) error("La contraseña debe tener al menos un símbolo ( . $ * # @ ! = + )");
+    }
+
+    /** Guarda el teléfono en formato internacional E.164, sin espacios ni guiones. */
+    public static String normalizarTelefono(String telefono) {
+        if (telefono == null) error("El teléfono es obligatorio");
+        String normalizado = telefono.strip().replaceAll("[\\s().-]", "");
+        if (!TELEFONO.matcher(normalizado).matches()) {
+            error("El teléfono debe incluir prefijo internacional, por ejemplo +573001234567");
+        }
+        return normalizado;
     }
 
     // Un record genera toString() con TODOS sus campos. Si algún día este objeto
