@@ -1,0 +1,11 @@
+-- ─────────────────────────────────────────────────────────────
+-- BidHouse — Fase 7: chat entre comprador y vendedor
+--
+-- Se corre UNA vez en Supabase: panel → SQL Editor → pegar → Run.
+-- Es seguro correrlo de nuevo.
+--
+-- Cada mensaje cuelga de un contrato (transacciones): existe un chat por
+-- venta, solo entre su comprador y su vendedor, desde que se adjudica o se
+-- compra. Quién puede leer y escribir lo revisa el backend
+-- (ServicioContratos) con el id que viene del token.
+-- ─────────────────────────────────────────────────────────────

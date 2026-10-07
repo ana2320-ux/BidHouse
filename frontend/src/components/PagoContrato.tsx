@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
+import { ChatContrato } from './ChatContrato';
 import './PagoContrato.css';
 
 // El contrato de garantía de quien mira la subasta (ServicioSubasta.contratoDe()).
@@ -50,6 +51,7 @@ export function PagoContrato({ contrato, alPagar }: { contrato: MiContrato; alPa
     <>
       <EtapaContrato contrato={contrato} alPagar={alPagar} />
       <HitosBlockchain contrato={contrato} />
+      <ChatContrato contratoId={contrato.id} rol={contrato.rol} />
     </>
   );
 }
