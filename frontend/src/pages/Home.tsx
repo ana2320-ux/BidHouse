@@ -184,10 +184,7 @@ export default function Home() {
                 ninguna transferencia depende de un tercero.
               </p>
               <div className="hero__actions fade-up" style={{ animationDelay: "0.3s" }}>
-                <Link to="/catalogo" className="btn btn--primary">
-                  Ver subastas activas
-                </Link>
-                <Link to="/como-funciona" className="btn btn--light">
+                <Link to="/como-funciona" className="btn btn--primary">
                   Cómo se verifica un lote
                 </Link>
               </div>

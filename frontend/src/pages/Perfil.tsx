@@ -123,7 +123,6 @@ function PerfilConSesion() {
           <span className="stat-label">ACTIVOS EN SUBASTA</span>
           <h3 className="stat-value">{enSubasta} {enSubasta === 1 ? 'Activo' : 'Activos'}</h3>
           <p className="stat-desc">{stats.activosEnVivo} en vivo, {stats.activosEnEspera} en espera</p>
-          <BotonPronto texto="Ver subastas activas" />
         </article>
         <article className="stat-card">
           <span className="stat-label">OFERTAS REALIZADAS</span>
