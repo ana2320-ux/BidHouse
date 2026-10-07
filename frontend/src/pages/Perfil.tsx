@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
 import { leerSesion } from '../lib/sesion';
 import { SaldoCuenta } from '../components/SaldoCuenta';
+import PreferenciasPanel from '../components/PreferenciasPanel';
 import './Perfil.css';
 
 // Forma de la respuesta de GET /api/usuarios/perfil (ver ServicioUsuario.perfil()).
@@ -144,6 +145,8 @@ function PerfilConSesion() {
       {/* ── Contenido principal: dos columnas ── */}
       {/* ── Saldo de BidHouse: recargar con Mercado Pago y ver el extracto ── */}
       <SaldoCuenta />
+
+      <PreferenciasPanel compacto />
 
       <section className="profile-dashboard">
         {/* Columna izquierda: resumen de lo publicado (sin cambios) */}

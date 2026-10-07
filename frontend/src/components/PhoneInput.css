@@ -1,0 +1,11 @@
+.phone-input { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; position: relative; }
+.phone-input__prefix-wrap { position: relative; }
+.phone-input__prefix { width: 100%; height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); color: var(--ink); font: inherit; cursor: pointer; }
+.phone-input__prefix:hover, .phone-input__prefix:focus-visible { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(24, 94, 148, .12); }
+.phone-input__prefix--error { border-color: #b42318; }
+.phone-input > input { min-width: 0; }
+.phone-input__menu { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: 245px; max-height: 240px; overflow-y: auto; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); box-shadow: 0 10px 24px rgba(20, 35, 53, .16); }
+.phone-input__option { width: 100%; display: flex; justify-content: space-between; gap: 12px; padding: 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
+.phone-input__option:hover, .phone-input__option[aria-selected="true"] { background: var(--gray-light); color: var(--blue-dark); }
+.phone-input__option strong { color: var(--gray-mid); font-weight: 600; }
+@media (max-width: 620px) { .phone-input { grid-template-columns: 106px minmax(0, 1fr); } .phone-input__menu { width: min(245px, calc(100vw - 64px)); } }

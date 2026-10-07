@@ -10,11 +10,12 @@ import Vender from './pages/Vender.tsx';
 import DetalleActivo from './pages/DetalleActivo';
 import VerificacionKYC from './pages/VerificacionKYC';
 import RetornoPago from './pages/RetornoPago';
+import Preferencias from './pages/Preferencias';
 
 
 // Pantallas de acceso a pantalla completa (estilo Amazon): sin navbar para
 // que el usuario no se distraiga mientras entra o crea su cuenta.
-const RUTAS_SIN_NAVBAR = ['/login', '/registro'];
+const RUTAS_SIN_NAVBAR = ['/login', '/registro', '/preferencias'];
 
 function App() {
   const { pathname } = useLocation();
@@ -33,6 +34,7 @@ function App() {
         <Route path="/como-funciona" element={<ComoFunciona />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/preferencias" element={<Preferencias />} />
         <Route path="/vender" element={<Vender />} />
         {/* Vuelta desde Mercado Pago ("Volver al sitio") */}
         <Route path="/pagos/retorno" element={<RetornoPago />} />

@@ -28,7 +28,7 @@ const steps = [
   },
 ];
 
-const categorias = ["Relojes", "Arte", "Autos clásicos", "Inmuebles", "Joyería", "Coleccionables"];
+const categorias = ["Joyería y Relojes", "Arte y Antigüedades", "Tecnología", "Vehículos", "Coleccionables", "Inmuebles"];
 
 // ---------- Íconos (SVG inline, sin dependencias externas) ----------
 
@@ -128,7 +128,7 @@ function TicketDemo() {
         <img src={daytona} alt="" />
       </div>
       <h3 className="ticket__title">Rolex Daytona Cosmograph</h3>
-      <p className="ticket__category">Relojes · Pieza certificada</p>
+      <p className="ticket__category">Joyería y Relojes · Pieza certificada</p>
       <div className="ticket__row">
         <div>
           <span className="ticket__label">Oferta actual</span>

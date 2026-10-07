@@ -1,0 +1,10 @@
+.preferencias-page { min-height: 100vh; padding: 38px 20px 70px; background: #f4f7fa; }
+.preferencias-page__logo { max-width: 850px; margin: 0 auto 28px; font-family: var(--font-serif); font-size: 1.8rem; text-align: left; color: var(--blue-dark); }
+.preferencias-page__logo span { color: var(--gold-dark); }
+.preferencias-page__card { max-width: 850px; margin: auto; padding: 34px; border: 1px solid var(--border); border-radius: 16px; background: var(--white); box-shadow: 0 14px 35px rgba(20, 35, 53, .07); }
+.preferencias-page__paso { color: var(--gold-dark); font-size: .7rem; font-weight: 800; letter-spacing: .14em; }
+.preferencias-page h1 { margin: 7px 0 8px; font-family: var(--font-serif); font-size: 2.35rem; color: var(--blue-dark); }
+.preferencias-page__card > p { margin: 0 0 26px; color: var(--gray-mid); line-height: 1.5; }
+.preferencias-page__omitir { display: block; margin: 14px auto 0; border: 0; background: transparent; color: var(--blue); font-size: .88rem; cursor: pointer; }
+.preferencias-page__omitir:hover { text-decoration: underline; }
+@media (max-width: 620px) { .preferencias-page { padding: 24px 12px 48px; } .preferencias-page__card { padding: 22px 16px; } .preferencias-page h1 { font-size: 1.85rem; } }

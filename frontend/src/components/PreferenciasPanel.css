@@ -1,0 +1,22 @@
+.preferencias-panel { margin: 0 0 40px; padding: 28px; border: 1px solid var(--border); border-radius: 14px; background: var(--white); }
+.preferencias-panel--compacto { margin: 0 0 48px; }
+.preferencias-panel__cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.preferencias-panel__eyebrow { color: var(--gold-dark); font-size: .7rem; font-weight: 800; letter-spacing: .14em; }
+.preferencias-panel h2 { margin: 5px 0 5px; font-family: var(--font-sans); font-size: 1.3rem; }
+.preferencias-panel p { margin: 0; color: var(--gray-mid); font-size: .9rem; line-height: 1.5; }
+.preferencias-panel__contador { padding: 6px 9px; border-radius: 999px; background: var(--gray-light); color: var(--blue-dark); font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.preferencias-panel__guardar { margin-top: 22px; padding: 11px 18px; border: 0; border-radius: 8px; background: var(--blue-dark); color: var(--white); font-weight: 700; cursor: pointer; }
+.preferencias-panel__guardar:hover:not(:disabled) { background: #152943; }
+.preferencias-panel__guardar:disabled { cursor: not-allowed; opacity: .6; }
+.preferencias-panel__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 22px; }
+.preferencias-panel__acciones .preferencias-panel__guardar { margin-top: 0; }
+.preferencias-panel__editar, .preferencias-panel__cancelar { margin-top: 22px; padding: 10px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.preferencias-panel__editar { border: 1px solid var(--blue); background: var(--white); color: var(--blue-dark); }
+.preferencias-panel__editar:hover { background: #f0f6fb; }
+.preferencias-panel__cancelar { border: 1px solid var(--border); background: var(--white); color: var(--ink); }
+.preferencias-panel__cancelar:hover:not(:disabled) { border-color: var(--blue); }
+.preferencias-panel__mensaje { margin-bottom: 14px; padding: 10px 12px; border-radius: 8px; font-size: .88rem; }
+.preferencias-panel__mensaje--error { background: #fff0f0; color: #b42318; }
+.preferencias-panel__mensaje--exito { background: #effaf3; color: #147a3d; }
+.preferencias-panel__cargando { padding: 12px 0; }
+@media (max-width: 620px) { .preferencias-panel { padding: 20px; } .preferencias-panel__cabecera { flex-direction: column; gap: 12px; } }

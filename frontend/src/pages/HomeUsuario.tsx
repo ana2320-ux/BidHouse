@@ -2,24 +2,19 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import type { Sesion } from '../lib/sesion';
+import SubastaCard, { type SubastaCardData } from '../components/SubastaCard';
 import './HomeUsuario.css';
 
 type Categoria = { id: string; nombre: string };
 
-type SubastaCatalogo = {
-  id: string;
-  activos: {
-    imagenes: string[] | null;
-    categorias: { nombre: string } | null;
-  } | null;
-};
+type SubastaCatalogo = SubastaCardData;
 
 type TarjetaCategoria = Categoria & { imagen: string | null; total: number };
 
 function armarTarjetas(categorias: Categoria[], subastas: SubastaCatalogo[]): TarjetaCategoria[] {
   return categorias
     .map((c) => {
-      const deEsta = subastas.filter((s) => s.activos?.categorias?.nombre === c.nombre);
+      const deEsta = subastas.filter((s) => s.activos?.categorias?.id === c.id);
       const imagen = deEsta.map((s) => s.activos?.imagenes?.[0]).find(Boolean) ?? null;
       return { ...c, imagen, total: deEsta.length };
     })
@@ -29,6 +24,8 @@ function armarTarjetas(categorias: Categoria[], subastas: SubastaCatalogo[]): Ta
 export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
   const { usuario } = sesion;
   const [tarjetas, setTarjetas] = useState<TarjetaCategoria[] | null>(null);
+  const [subastas, setSubastas] = useState<SubastaCatalogo[]>([]);
+  const [preferencias, setPreferencias] = useState<string[] | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -36,9 +33,22 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
       api<Categoria[]>('/api/categorias'),
       api<SubastaCatalogo[]>('/api/subastas'),
     ])
-      .then(([categorias, subastas]) => setTarjetas(armarTarjetas(categorias, subastas)))
+      .then(([categorias, lista]) => {
+        setSubastas(lista);
+        setTarjetas(armarTarjetas(categorias, lista));
+      })
       .catch(() => setError(true));
+    // La Home autenticada puede consultar preferencias. Si la tabla aún no se
+    // ha creado, se mantiene la Home general sin mostrar un error bloqueante.
+    api<{ categoriaIds: string[] }>('/api/usuarios/preferencias')
+      .then((respuesta) => setPreferencias(respuesta.categoriaIds ?? []))
+      .catch(() => setPreferencias([]));
   }, []);
+
+  const recomendadas = subastas.filter((subasta) => {
+    const categoriaId = subasta.activos?.categorias?.id;
+    return Boolean(categoriaId && preferencias?.includes(categoriaId));
+  });
 
   return (
     <main className="inicio">
@@ -116,6 +126,44 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
           <Link to="/como-funciona" className="inicio-acceso__boton">Cómo funciona</Link>
         </article>
       </section>
+
+      {/* ── Recomendaciones por preferencias ── */}
+      {preferencias === null && (
+        <section className="bh-container inicio-recomendadas inicio-recomendadas--cargando" aria-live="polite">
+          <h2>Subastas según tus intereses</h2>
+          <p>Cargando recomendaciones...</p>
+        </section>
+      )}
+      {preferencias && preferencias.length > 0 && (
+        <section className="bh-container inicio-recomendadas" aria-labelledby="recomendadas-titulo">
+          <div className="inicio-recomendadas__cabecera">
+            <div>
+              <h2 id="recomendadas-titulo">Subastas según tus intereses</h2>
+              <p>Activos relacionados con las categorías que elegiste.</p>
+            </div>
+            <Link to="/catalogo" className="inicio-recomendadas__enlace">Explorar catálogo</Link>
+          </div>
+          {recomendadas.length > 0 ? (
+            <div className="catalog-grid inicio-recomendadas__grid">
+              {recomendadas.map((subasta) => <SubastaCard key={subasta.id} subasta={subasta} />)}
+            </div>
+          ) : (
+            <div className="inicio-recomendadas__vacio">
+              <p>No hay subastas activas en tus categorías favoritas por ahora.</p>
+              <Link to="/catalogo" className="inicio-acceso__boton">Explorar catálogo completo</Link>
+            </div>
+          )}
+        </section>
+      )}
+      {preferencias && preferencias.length === 0 && (
+        <section className="bh-container inicio-recomendadas inicio-recomendadas--sin-preferencias">
+          <div>
+            <h2>Personaliza tu experiencia</h2>
+            <p>Selecciona tus categorías favoritas para encontrar oportunidades más relevantes.</p>
+          </div>
+          <Link to="/preferencias" className="inicio-acceso__boton">Elegir preferencias</Link>
+        </section>
+      )}
 
       {/* ── Servicios ── */}
       <section className="bh-container inicio-servicios">

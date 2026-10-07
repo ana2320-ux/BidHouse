@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { ETIQUETA_MODO, modoDe } from '../lib/modos';
+import SubastaCard, { type SubastaCardData } from '../components/SubastaCard';
 import './Catalogo.css';
 
 interface Categoria {
@@ -9,27 +9,10 @@ interface Categoria {
   nombre: string;
 }
 
-interface Subasta {
-  id: string;
-  titulo: string;
-  activos: {
-    imagenes: string[] | null;
-    esta_verificado: boolean;
-    categorias: { nombre: string } | null;
-  } | null;
-  permite_pujas: boolean | null;
-  precio_compra_inmediata: number | null;
-}
-
 const TODOS = 'Todos';
 
-const hashCorto = (id: string) => {
-  const hex = id.replace(/-/g, '').toUpperCase();
-  return `0x${hex.slice(0, 6)} ... ${hex.slice(-4)}`;
-};
-
 export default function Catalogo() {
-  const [subastas, setSubastas] = useState<Subasta[] | null>(null);
+  const [subastas, setSubastas] = useState<SubastaCardData[] | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   // ?categoria=Vehículos en la URL (lo usa el home al hacer clic en una
   // categoría) deja el filtro elegido desde el principio.
@@ -38,7 +21,7 @@ export default function Catalogo() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    api<Subasta[]>('/api/subastas').then(setSubastas).catch(() => setError(true));
+    api<SubastaCardData[]>('/api/subastas').then(setSubastas).catch(() => setError(true));
     api<Categoria[]>('/api/categorias').then(setCategorias).catch(() => setError(true));
   }, []);
 
@@ -85,34 +68,7 @@ export default function Catalogo() {
 
       {/* Grid de Tarjetas */}
       <div className="catalog-grid">
-        {visibles.map((item) => {
-          const modo = modoDe(item.permite_pujas, item.precio_compra_inmediata);
-          const imagen = item.activos?.imagenes?.[0];
-          return (
-            <Link key={item.id} to={`/activo/${item.id}`} className="catalog-card-link">
-              <article className="catalog-card">
-              <div className="catalog-card__image-wrapper">
-                {imagen && <img src={imagen} alt={item.titulo} />}
-              </div>
-              <div className="catalog-card__content">
-                <div className="catalog-card__meta">
-                  <span className="category">{(item.activos?.categorias?.nombre ?? 'SIN CATEGORÍA').toUpperCase()}</span>
-                  {/* Cómo se vende: se ve antes de entrar al detalle. */}
-                  <span className={`status status--${modo}`}>{ETIQUETA_MODO[modo]}</span>
-                </div>
-                <h3 className="catalog-card__title">{item.titulo}</h3>
-                <div className="catalog-card__hash">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                  </svg>
-                  {hashCorto(item.id)}
-                </div>
-              </div>
-              </article>
-            </Link>
-          );
-        })}
+        {visibles.map((item) => <SubastaCard key={item.id} subasta={item} />)}
       </div>
     </main>
   );

@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { api, ApiError } from '../api';
+import { api } from '../api';
 import './Registro.css';
 import { supabase } from '../lib/supabaseClient';
+import PhoneInput from '../components/PhoneInput';
+import { guardarSesion } from '../lib/sesion';
+import type { RespuestaLogin } from '../lib/sesion';
 
 // Lo que /login manda en el "state" de la navegación cuando el correo es nuevo.
 type EstadoDesdeLogin = { email?: string; esNuevo?: boolean } | null;
@@ -40,7 +43,8 @@ export default function Registro() {
     nombre: '',
     apellido: '',
     documento_identidad: '',
-    telefono: '',
+    telefonoNumero: '',
+    telefonoPrefijo: '+57',
     email: desdeLogin?.email ?? '',
     direccion: '',
     ciudad: '',
@@ -108,7 +112,7 @@ export default function Registro() {
       setError('El documento de identidad es obligatorio para verificar tu cuenta.');
       return false;
     }
-    if (formData.telefono.trim() === '') {
+    if (formData.telefonoNumero.trim() === '' || formData.telefonoNumero.replace(/\D/g, '').length < 7) {
       setError('Necesitamos un teléfono de contacto válido.');
       return false;
     }
@@ -178,7 +182,8 @@ export default function Registro() {
       return;
     }
 
-    const { password, ...perfil } = formData;
+    const { password, telefonoNumero, telefonoPrefijo, ...perfil } = formData;
+    const telefono = `${telefonoPrefijo}${telefonoNumero.replace(/\D/g, '')}`;
 
     setLoading(true);
     setAnalisisEtapa(1);
@@ -200,7 +205,7 @@ export default function Registro() {
             nombre: perfil.nombre,
             apellido: perfil.apellido,
             documento_identidad: perfil.documento_identidad,
-            telefono: perfil.telefono,
+            telefono,
             direccion: perfil.direccion,
             ciudad: perfil.ciudad,
             pais: perfil.pais,
@@ -211,17 +216,41 @@ export default function Registro() {
 
       if (signUpError) throw signUpError;
 
-      // 3. Si se registró correctamente, pasamos a la pantalla de pedir el código OTP
-      setPaso(3);
+      // Si el proyecto no exige confirmación, Supabase entrega la sesión aquí.
+      // En ese caso se completa el perfil y se conserva la sesión del backend.
+      if (data.session) {
+        await finalizarRegistro(data.session.access_token, telefono, perfil);
+      } else {
+        // Con confirmación activa, Supabase envía el código y esperamos al OTP.
+        setPaso(3);
+      }
 
-    } catch (err: any) {
-      setError(
-        err.message || 'No pudimos conectar con el servidor. Intenta de nuevo en un momento.'
-      );
+    } catch (err: unknown) {
+      setError(err instanceof Error
+        ? err.message
+        : 'No pudimos conectar con el servidor. Intenta de nuevo en un momento.');
     } finally {
       setLoading(false);
       setAnalisisEtapa(0);
     }
+  };
+
+  const finalizarRegistro = async (accessToken: string, telefono: string, datosPerfil: Omit<typeof formData, 'password' | 'confirmPassword' | 'telefonoNumero' | 'telefonoPrefijo'>) => {
+    const { documento_identidad, ...datosConNombreBackend } = datosPerfil;
+    await api('/api/usuarios/perfil/registro', {
+      method: 'POST',
+      token: accessToken,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...datosConNombreBackend, documentoIdentidad: documento_identidad, telefono }),
+    });
+    const sesion = await api<RespuestaLogin>('/api/usuarios/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: formData.email.trim(), password: formData.password }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    guardarSesion(sesion);
+    setSuccess(true);
+    window.setTimeout(() => navigate('/preferencias'), 1200);
   };
 
   // ── Validar Código OTP (Paso 3) ──
@@ -239,13 +268,25 @@ export default function Registro() {
 
       if (error) throw error;
 
-      // ¡Éxito! El correo está verificado y el usuario está logueado
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/perfil'); // Lo enviamos directo a su bóveda/perfil
-      }, 2500);
+      if (data.session) {
+        const telefono = `${formData.telefonoPrefijo}${formData.telefonoNumero.replace(/\D/g, '')}`;
+        const datosPerfil = {
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          documento_identidad: formData.documento_identidad,
+          email: formData.email,
+          direccion: formData.direccion,
+          ciudad: formData.ciudad,
+          pais: formData.pais,
+          es_vendedor: formData.es_vendedor,
+        };
+        await finalizarRegistro(data.session.access_token, telefono, datosPerfil);
+      } else {
+        setSuccess(true);
+        window.setTimeout(() => navigate('/login', { state: { email: formData.email } }), 1800);
+      }
 
-    } catch (err: any) {
+    } catch {
       setError('Código incorrecto o expirado. Por favor, revisa tu correo.');
     } finally {
       setLoading(false);
@@ -269,7 +310,7 @@ export default function Registro() {
           <h1>¡Cuenta creada y validada!</h1>
           <p>
             Tu identidad y documentos han sido procesados mediante el protocolo biométrico.
-            Serás redirigido al inicio de sesión en unos segundos...
+            Serás redirigido en unos segundos...
           </p>
         </div>
       </main>
@@ -367,16 +408,12 @@ export default function Registro() {
 
                   <div className="bh-campo">
                     <label htmlFor="telefono">Teléfono</label>
-                    <input
-                      type="tel"
-                      id="telefono"
-                      name="telefono"
-                      placeholder="Ej: 300 123 4567"
-                      autoComplete="tel"
-                      maxLength={20}
-                      value={formData.telefono}
-                      onChange={handleChange}
-                      required
+                    <PhoneInput
+                      prefijo={formData.telefonoPrefijo}
+                      numero={formData.telefonoNumero}
+                      onPrefijoChange={(telefonoPrefijo) => setFormData({ ...formData, telefonoPrefijo })}
+                      onNumeroChange={(telefonoNumero) => setFormData({ ...formData, telefonoNumero })}
+                      error={Boolean(error && formData.telefonoNumero.trim() === '')}
                     />
                   </div>
                 </div>

@@ -33,7 +33,7 @@ public class ServicioSubasta {
         // permite_pujas + precio_compra_inmediata: el catálogo muestra el modo de venta.
         return db.consultar("/subastas?select=id,titulo,precio_base,oferta_actual_mas_alta,fecha_fin,estado,"
                 + "permite_pujas,precio_compra_inmediata,"
-                + "activos(nombre,imagenes,esta_verificado,categorias(nombre))"
+                + "activos(nombre,imagenes,esta_verificado,categorias(id,nombre))"
                 + "&esta_activa=eq.true&estado=in.(pendiente,activa)&order=creado_en.desc");
     }
 

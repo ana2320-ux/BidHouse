@@ -12,15 +12,17 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(ruta: string, init?: RequestInit): Promise<T> {
+export async function api<T>(ruta: string, init?: RequestInit & { token?: string }): Promise<T> {
   // Si hay sesión, cada pedido lleva el token. Así el backend sabe quién es
   // (Spring lo verifica en SeguridadConfig) sin que las páginas hagan nada.
   // new Headers(...) conserva los headers que ya traía el pedido.
   const sesion = leerSesion();
-  const headers = new Headers(init?.headers);
-  if (sesion) headers.set('Authorization', `Bearer ${sesion.accessToken}`);
+  const { token, ...requestInit } = init ?? {};
+  const headers = new Headers(requestInit.headers);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  else if (sesion) headers.set('Authorization', `Bearer ${sesion.accessToken}`);
 
-  const respuesta = await fetch(API_URL + ruta, { ...init, headers });
+  const respuesta = await fetch(API_URL + ruta, { ...requestInit, headers });
 
   // Spring responde 401 con el header WWW-Authenticate solo cuando el problema
   // es el TOKEN (vencido, inválido o ausente). Un 401 sin ese header es otra
