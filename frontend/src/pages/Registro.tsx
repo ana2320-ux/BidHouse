@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import './Registro.css';
@@ -291,6 +291,34 @@ export default function Registro() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ── Reenviar el código (Paso 3) ──
+  // El código vence (lo define "Email OTP Expiration" en Supabase) y al pedir
+  // uno nuevo el anterior deja de servir. Supabase no deja reenviar a la misma
+  // dirección antes de 60 s, así que el botón espera ese tiempo.
+  const [esperaReenvio, setEsperaReenvio] = useState(0);
+  const [avisoReenvio, setAvisoReenvio] = useState('');
+
+  useEffect(() => {
+    if (esperaReenvio <= 0) return;
+    const t = window.setTimeout(() => setEsperaReenvio((s) => s - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [esperaReenvio]);
+
+  const handleReenviarCodigo = async () => {
+    setError('');
+    setAvisoReenvio('');
+    const { error } = await supabase.auth.resend({ type: 'signup', email: formData.email });
+    if (error) {
+      setError(error.status === 429
+        ? 'Espera un momento antes de pedir otro código.'
+        : 'No pudimos reenviar el código. Intenta de nuevo en un momento.');
+      return;
+    }
+    setCodigoVerificacion('');
+    setAvisoReenvio(`Te enviamos un código nuevo a ${formData.email}.`);
+    setEsperaReenvio(60);
   };
 
   // ── Pantalla de Éxito Final ──
@@ -696,6 +724,22 @@ export default function Registro() {
               >
                 {loading ? 'Validando...' : 'Confirmar código'}
               </button>
+
+              <p style={{ color: 'var(--gray-mid)', marginTop: '20px', fontSize: '0.9rem' }}>
+                ¿No te llegó o ya expiró?{' '}
+                <button
+                  type="button"
+                  className="bh-acceso__link"
+                  onClick={handleReenviarCodigo}
+                  disabled={esperaReenvio > 0}
+                  style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: esperaReenvio > 0 ? 'default' : 'pointer' }}
+                >
+                  {esperaReenvio > 0 ? `Reenviar en ${esperaReenvio} s` : 'Reenviar código'}
+                </button>
+              </p>
+              {avisoReenvio && (
+                <p role="status" style={{ color: 'var(--blue)', fontSize: '0.88rem', marginTop: '8px' }}>{avisoReenvio}</p>
+              )}
             </div>
           )}
         </form>
