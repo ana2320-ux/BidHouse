@@ -162,6 +162,14 @@ export default function Registro() {
     e.preventDefault();
     setError('');
 
+    // En el paso 3 el Enter del campo del código también envía este <form>:
+    // sin esto se volvía a llamar signUp() y Supabase mandaba otro código,
+    // dejando inválido el que la persona acababa de escribir.
+    if (paso === 3) {
+      if (codigoVerificacion.length === 8 && !loading) await handleVerificarCodigo(e);
+      return;
+    }
+
     if (paso === 1) {
       if (validarPaso1()) {
         setPaso(2);
@@ -259,15 +267,21 @@ export default function Registro() {
     setError('');
     setLoading(true);
 
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: formData.email,
+      token: codigoVerificacion,
+      type: 'signup', // Le decimos a Supabase que es un código de registro
+    });
+
+    if (error) {
+      setError('Código incorrecto o expirado. Pide uno nuevo con "Reenviar código".');
+      setLoading(false);
+      return;
+    }
+
+    // De aquí en adelante el código ya fue aceptado: si algo falla, la cuenta
+    // existe y está confirmada, así que el mensaje no debe culpar al código.
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: formData.email,
-        token: codigoVerificacion,
-        type: 'signup', // Le decimos a Supabase que es un código de registro
-      });
-
-      if (error) throw error;
-
       if (data.session) {
         const telefono = `${formData.telefonoPrefijo}${formData.telefonoNumero.replace(/\D/g, '')}`;
         const datosPerfil = {
@@ -286,8 +300,10 @@ export default function Registro() {
         window.setTimeout(() => navigate('/login', { state: { email: formData.email } }), 1800);
       }
 
-    } catch {
-      setError('Código incorrecto o expirado. Por favor, revisa tu correo.');
+    } catch (err: unknown) {
+      setError('Tu correo quedó confirmado, pero no pudimos terminar de abrir tu sesión'
+        + (err instanceof Error && err.message ? ` (${err.message})` : '')
+        + '. Inicia sesión con tu correo y contraseña.');
     } finally {
       setLoading(false);
     }
