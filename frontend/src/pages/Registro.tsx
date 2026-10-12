@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import PhoneInput from '../components/PhoneInput';
 import { guardarSesion } from '../lib/sesion';
 import type { RespuestaLogin } from '../lib/sesion';
+import { normalizarTelefono } from '../lib/phone';
 
 // Lo que /login manda en el "state" de la navegación cuando el correo es nuevo.
 type EstadoDesdeLogin = { email?: string; esNuevo?: boolean } | null;
@@ -53,6 +54,7 @@ export default function Registro() {
     password: '',
     confirmPassword: '',
   });
+  const [telefonoPaisCodigo, setTelefonoPaisCodigo] = useState('CO');
 
   // ── Documentos y biometría para KYC (Estándar Rappi / Truora) ──
   const [docFrente, setDocFrente] = useState<File | null>(null);
@@ -112,8 +114,8 @@ export default function Registro() {
       setError('El documento de identidad es obligatorio para verificar tu cuenta.');
       return false;
     }
-    if (formData.telefonoNumero.trim() === '' || formData.telefonoNumero.replace(/\D/g, '').length < 7) {
-      setError('Necesitamos un teléfono de contacto válido.');
+    if (!normalizarTelefono(formData.telefonoPrefijo, formData.telefonoNumero)) {
+      setError('Número de teléfono inválido para el país seleccionado.');
       return false;
     }
     if (formData.email.trim() === '') {
@@ -191,7 +193,11 @@ export default function Registro() {
     }
 
     const { password, telefonoNumero, telefonoPrefijo, ...perfil } = formData;
-    const telefono = `${telefonoPrefijo}${telefonoNumero.replace(/\D/g, '')}`;
+    const telefono = normalizarTelefono(telefonoPrefijo, telefonoNumero);
+    if (!telefono) {
+      setError('Número de teléfono inválido para el país seleccionado.');
+      return;
+    }
 
     setLoading(true);
     setAnalisisEtapa(1);
@@ -283,7 +289,12 @@ export default function Registro() {
     // existe y está confirmada, así que el mensaje no debe culpar al código.
     try {
       if (data.session) {
-        const telefono = `${formData.telefonoPrefijo}${formData.telefonoNumero.replace(/\D/g, '')}`;
+        const telefono = normalizarTelefono(formData.telefonoPrefijo, formData.telefonoNumero);
+        if (!telefono) {
+          setError('Número de teléfono inválido para el país seleccionado.');
+          setLoading(false);
+          return;
+        }
         const datosPerfil = {
           nombre: formData.nombre,
           apellido: formData.apellido,
@@ -453,11 +464,13 @@ export default function Registro() {
                   <div className="bh-campo">
                     <label htmlFor="telefono">Teléfono</label>
                     <PhoneInput
+                      paisCodigo={telefonoPaisCodigo}
                       prefijo={formData.telefonoPrefijo}
                       numero={formData.telefonoNumero}
-                      onPrefijoChange={(telefonoPrefijo) => setFormData({ ...formData, telefonoPrefijo })}
-                      onNumeroChange={(telefonoNumero) => setFormData({ ...formData, telefonoNumero })}
-                      error={Boolean(error && formData.telefonoNumero.trim() === '')}
+                      onPaisCodigoChange={setTelefonoPaisCodigo}
+                      onPrefijoChange={(telefonoPrefijo) => setFormData((actual) => ({ ...actual, telefonoPrefijo }))}
+                      onNumeroChange={(telefonoNumero) => setFormData((actual) => ({ ...actual, telefonoNumero }))}
+                      error={Boolean(error && !normalizarTelefono(formData.telefonoPrefijo, formData.telefonoNumero))}
                     />
                   </div>
                 </div>

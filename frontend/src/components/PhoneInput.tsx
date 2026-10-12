@@ -1,33 +1,73 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { getCountries, getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
 import './PhoneInput.css';
 
-type PaisTelefono = { codigo: string; nombre: string; prefijo: string };
+export type PaisTelefono = {
+  codigo: string;
+  nombre: string;
+  prefijo: string;
+  bandera: string;
+  banderaUrl?: string;
+};
 
-const PAISES_TELEFONO: PaisTelefono[] = [
-  { codigo: 'CO', nombre: 'Colombia', prefijo: '+57' },
-  { codigo: 'MX', nombre: 'México', prefijo: '+52' },
-  { codigo: 'US', nombre: 'Estados Unidos', prefijo: '+1' },
-  { codigo: 'CA', nombre: 'Canadá', prefijo: '+1' },
-  { codigo: 'ES', nombre: 'España', prefijo: '+34' },
-  { codigo: 'AR', nombre: 'Argentina', prefijo: '+54' },
-  { codigo: 'CL', nombre: 'Chile', prefijo: '+56' },
-  { codigo: 'PE', nombre: 'Perú', prefijo: '+51' },
-  { codigo: 'BR', nombre: 'Brasil', prefijo: '+55' },
-  { codigo: 'PA', nombre: 'Panamá', prefijo: '+507' },
-];
+const urlBandera = (codigo: string) => `https://flagcdn.com/w40/${codigo.toLowerCase()}.png`;
+
+function banderaDesdeCodigo(codigo: string): string {
+  return codigo.length === 2
+    ? String.fromCodePoint(...codigo.toUpperCase().split('').map((letra) => 127397 + letra.charCodeAt(0)))
+    : '🏳️';
+}
+
+function crearPaises(): PaisTelefono[] {
+  const nombres = new Intl.DisplayNames(['es'], { type: 'region' });
+  return getCountries()
+    .map((codigo) => {
+      const codigoPais = codigo as CountryCode;
+      const codigoNormalizado = codigoPais.toUpperCase();
+      const nombre = nombres.of(codigoNormalizado) ?? codigoNormalizado;
+      const prefijo = `+${getCountryCallingCode(codigoPais)}`;
+      return {
+        codigo: codigoNormalizado,
+        nombre,
+        prefijo,
+        bandera: banderaDesdeCodigo(codigoNormalizado),
+        banderaUrl: urlBandera(codigoNormalizado),
+      };
+    })
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+}
+
+const PAISES = crearPaises();
+const PAIS_FALLBACK = PAISES.find((pais) => pais.codigo === 'CO') ?? PAISES[0];
+
+function Bandera({ pais }: { pais: PaisTelefono }) {
+  const [mostrarEmoji, setMostrarEmoji] = useState(false);
+  if (mostrarEmoji) return <span aria-hidden="true">{pais.bandera}</span>;
+  return <img src={pais.banderaUrl} alt="" onError={() => setMostrarEmoji(true)} />;
+}
 
 type Props = {
+  paisCodigo: string;
   prefijo: string;
   numero: string;
+  onPaisCodigoChange: (codigo: string) => void;
   onPrefijoChange: (prefijo: string) => void;
   onNumeroChange: (numero: string) => void;
   error?: boolean;
 };
 
-export default function PhoneInput({ prefijo, numero, onPrefijoChange, onNumeroChange, error }: Props) {
+export default function PhoneInput({
+  paisCodigo,
+  prefijo,
+  numero,
+  onPaisCodigoChange,
+  onPrefijoChange,
+  onNumeroChange,
+  error,
+}: Props) {
   const [abierto, setAbierto] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
   const ref = useRef<HTMLDivElement>(null);
-  const pais = PAISES_TELEFONO.find((p) => p.prefijo === prefijo) ?? PAISES_TELEFONO[0];
 
   useEffect(() => {
     const cerrar = (event: MouseEvent) => {
@@ -37,6 +77,27 @@ export default function PhoneInput({ prefijo, numero, onPrefijoChange, onNumeroC
     return () => document.removeEventListener('mousedown', cerrar);
   }, []);
 
+  const paisSeleccionado = PAISES.find((pais) => pais.codigo === paisCodigo && pais.prefijo === prefijo)
+    ?? PAISES.find((pais) => pais.codigo === paisCodigo)
+    ?? PAISES.find((pais) => pais.prefijo === prefijo)
+    ?? PAIS_FALLBACK;
+
+  const paisesFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLocaleLowerCase('es');
+    if (!termino) return PAISES;
+    return PAISES.filter((pais) => pais.nombre.toLocaleLowerCase('es').includes(termino) || pais.prefijo.includes(termino));
+  }, [busqueda]);
+
+  const cambiarNumero = (valor: string) => {
+    const texto = valor.trimStart();
+    const digitos = texto.replace(/\D/g, '');
+    const digitosPrefijo = prefijo.replace(/\D/g, '');
+    const sinPrefijoDuplicado = texto.startsWith('+') && digitos.startsWith(digitosPrefijo)
+      ? digitos.slice(digitosPrefijo.length)
+      : valor;
+    onNumeroChange(sinPrefijoDuplicado);
+  };
+
   return (
     <div className="phone-input" ref={ref}>
       <div className="phone-input__prefix-wrap">
@@ -45,41 +106,66 @@ export default function PhoneInput({ prefijo, numero, onPrefijoChange, onNumeroC
           className={`phone-input__prefix ${error ? 'phone-input__prefix--error' : ''}`}
           aria-haspopup="listbox"
           aria-expanded={abierto}
-          aria-label={`Prefijo telefónico seleccionado: ${pais.nombre} ${pais.prefijo}`}
+          aria-controls="phone-input-country-list"
+          aria-label={`Prefijo telefónico seleccionado: ${paisSeleccionado.nombre} ${paisSeleccionado.prefijo}`}
           onClick={() => setAbierto((value) => !value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setAbierto(false);
+          }}
         >
-          <span>{pais.prefijo}</span>
+          <span className="phone-input__selected">
+            <Bandera pais={paisSeleccionado} />
+            <span>{paisSeleccionado.prefijo}</span>
+          </span>
           <span aria-hidden="true">⌄</span>
         </button>
+
         {abierto && (
-          <div className="phone-input__menu" role="listbox" aria-label="Países y prefijos">
-            {PAISES_TELEFONO.map((opcion) => (
-              <button
-                type="button"
-                role="option"
-                aria-selected={opcion.codigo === pais.codigo}
-                className="phone-input__option"
-                key={opcion.codigo}
-                onClick={() => {
-                  onPrefijoChange(opcion.prefijo);
-                  setAbierto(false);
-                }}
-              >
-                <span>{opcion.nombre}</span>
-                <strong>{opcion.prefijo}</strong>
-              </button>
-            ))}
+          <div className="phone-input__menu" id="phone-input-country-list" role="listbox" aria-label="Países y prefijos">
+            <input
+              type="search"
+              className="phone-input__search"
+              placeholder="Buscar país o prefijo"
+              value={busqueda}
+              onChange={(event) => setBusqueda(event.target.value)}
+              aria-label="Buscar país o prefijo"
+              autoFocus
+            />
+            <div className="phone-input__options">
+              {paisesFiltrados.map((opcion) => (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={opcion.codigo === paisSeleccionado.codigo && opcion.prefijo === paisSeleccionado.prefijo}
+                  className="phone-input__option"
+                  key={`${opcion.codigo}-${opcion.prefijo}`}
+                  onClick={() => {
+                    onPaisCodigoChange(opcion.codigo);
+                    onPrefijoChange(opcion.prefijo);
+                    setBusqueda('');
+                    setAbierto(false);
+                  }}
+                >
+                  <span className="phone-input__option-name">
+                    <Bandera pais={opcion} />
+                    <span>{opcion.nombre}</span>
+                  </span>
+                  <strong>{opcion.prefijo}</strong>
+                </button>
+              ))}
+              {!paisesFiltrados.length && <span className="phone-input__empty">No encontramos ese país.</span>}
+            </div>
           </div>
         )}
       </div>
       <input
         type="tel"
         value={numero}
-        onChange={(event) => onNumeroChange(event.target.value.replace(/[^\d\s()-]/g, ''))}
+        onChange={(event) => cambiarNumero(event.target.value)}
         placeholder="300 123 4567"
         autoComplete="tel-national"
         inputMode="tel"
-        aria-label="Número de teléfono"
+        aria-label="Número de teléfono nacional"
         aria-invalid={error || undefined}
         required
       />
