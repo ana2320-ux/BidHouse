@@ -7,6 +7,7 @@ import PhoneInput from '../components/PhoneInput';
 import { guardarSesion } from '../lib/sesion';
 import type { RespuestaLogin } from '../lib/sesion';
 import { normalizarTelefono } from '../lib/phone';
+import UbicacionInput from '../components/UbicacionInput';
 
 // Lo que /login manda en el "state" de la navegación cuando el correo es nuevo.
 type EstadoDesdeLogin = { email?: string; esNuevo?: boolean } | null;
@@ -56,6 +57,12 @@ export default function Registro() {
   });
   const [telefonoPaisCodigo, setTelefonoPaisCodigo] = useState('CO');
 
+  // ── Estados para la API de Ubicación (Países y Ciudades) ──
+  const [paises, setPaises] = useState<string[]>([]);
+  const [ciudades, setCiudades] = useState<string[]>([]);
+  const [dataUbicacion, setDataUbicacion] = useState<any[]>([]);
+  const [, setCargandoUbicacion] = useState(true);
+
   // ── Documentos y biometría para KYC (Estándar Rappi / Truora) ──
   const [docFrente, setDocFrente] = useState<File | null>(null);
   const [, setDocFrentePreview] = useState<string | null>(null);
@@ -69,13 +76,49 @@ export default function Registro() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // ── Manejar cambios en los inputs ──
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, type, value, checked } = e.target;
+  // ── Cargar Países y Ciudades desde la API al montar el componente ──
+  useEffect(() => {
+    const fetchUbicaciones = async () => {
+      try {
+        const res = await fetch('https://countriesnow.space/api/v0.1/countries');
+        const json = await res.json();
+        
+        if (!json.error) {
+          setDataUbicacion(json.data);
+          const listaPaises = json.data.map((item: any) => item.country).sort();
+          setPaises(listaPaises);
+
+          // Cargar las ciudades del país que está por defecto en el formData (Colombia)
+          const paisInicial = json.data.find((item: any) => item.country === formData.pais);
+          if (paisInicial) {
+            setCiudades(paisInicial.cities.sort());
+          }
+        }
+      } catch (err) {
+        console.error('Error al cargar la API de países:', err);
+      } finally {
+        setCargandoUbicacion(false);
+      }
+    };
+    fetchUbicaciones();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Manejar cambios en los inputs generales ──
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, type, value } = e.target;
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+  };
+
+  // ── Manejar cambio específico de País para actualizar las Ciudades ──
+  const handlePaisChange = (paisSeleccionado: string) => {
+    setFormData(prev => ({ ...prev, pais: paisSeleccionado, ciudad: '' }));
+    
+    const datosDelPais = dataUbicacion.find(item => item.country === paisSeleccionado);
+    setCiudades(datosDelPais ? datosDelPais.cities.sort() : []);
   };
 
   // ── Manejar carga de fotos para KYC ──
@@ -130,12 +173,12 @@ export default function Registro() {
       setError('Debes proporcionar tu dirección para los envíos.');
       return false;
     }
-    if (formData.ciudad.trim() === '') {
-      setError('La ciudad es un campo obligatorio.');
+    if (formData.pais.trim() === '' || !paises.includes(formData.pais)) {
+      setError('Por favor, selecciona un país válido de la lista.');
       return false;
     }
-    if (formData.pais.trim() === '') {
-      setError('Por favor, indica tu país de residencia.');
+    if (formData.ciudad.trim() === '' || (!ciudades.includes(formData.ciudad) && ciudades.length > 0)) {
+      setError('Por favor, selecciona una ciudad válida de la lista.');
       return false;
     }
     if (!REQUISITOS_PASSWORD.every((r) => r.cumple(formData.password))) {
@@ -164,9 +207,6 @@ export default function Registro() {
     e.preventDefault();
     setError('');
 
-    // En el paso 3 el Enter del campo del código también envía este <form>:
-    // sin esto se volvía a llamar signUp() y Supabase mandaba otro código,
-    // dejando inválido el que la persona acababa de escribir.
     if (paso === 3) {
       if (codigoVerificacion.length === 8 && !loading) await handleVerificarCodigo(e);
       return;
@@ -203,14 +243,12 @@ export default function Registro() {
     setAnalisisEtapa(1);
 
     try {
-      // 1. Simulación visual de etapas de análisis
       await new Promise((r) => setTimeout(r, 700));
       setAnalisisEtapa(2);
       await new Promise((r) => setTimeout(r, 700));
       setAnalisisEtapa(3);
       await new Promise((r) => setTimeout(r, 600));
 
-      // 2. Registro real en Supabase
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: perfil.email,
         password: password,
@@ -230,12 +268,9 @@ export default function Registro() {
 
       if (signUpError) throw signUpError;
 
-      // Si el proyecto no exige confirmación, Supabase entrega la sesión aquí.
-      // En ese caso se completa el perfil y se conserva la sesión del backend.
       if (data.session) {
         await finalizarRegistro(data.session.access_token, telefono, perfil);
       } else {
-        // Con confirmación activa, Supabase envía el código y esperamos al OTP.
         setPaso(3);
       }
 
@@ -276,7 +311,7 @@ export default function Registro() {
     const { data, error } = await supabase.auth.verifyOtp({
       email: formData.email,
       token: codigoVerificacion,
-      type: 'signup', // Le decimos a Supabase que es un código de registro
+      type: 'signup',
     });
 
     if (error) {
@@ -285,8 +320,6 @@ export default function Registro() {
       return;
     }
 
-    // De aquí en adelante el código ya fue aceptado: si algo falla, la cuenta
-    // existe y está confirmada, así que el mensaje no debe culpar al código.
     try {
       if (data.session) {
         const telefono = normalizarTelefono(formData.telefonoPrefijo, formData.telefonoNumero);
@@ -310,7 +343,6 @@ export default function Registro() {
         setSuccess(true);
         window.setTimeout(() => navigate('/login', { state: { email: formData.email } }), 1800);
       }
-
     } catch (err: unknown) {
       setError('Tu correo quedó confirmado, pero no pudimos terminar de abrir tu sesión'
         + (err instanceof Error && err.message ? ` (${err.message})` : '')
@@ -321,9 +353,6 @@ export default function Registro() {
   };
 
   // ── Reenviar el código (Paso 3) ──
-  // El código vence (lo define "Email OTP Expiration" en Supabase) y al pedir
-  // uno nuevo el anterior deja de servir. Supabase no deja reenviar a la misma
-  // dirección antes de 60 s, así que el botón espera ese tiempo.
   const [esperaReenvio, setEsperaReenvio] = useState(0);
   const [avisoReenvio, setAvisoReenvio] = useState('');
 
@@ -348,7 +377,6 @@ export default function Registro() {
     setEsperaReenvio(60);
   };
 
-  // ── Pantalla de Éxito Final ──
   if (success) {
     return (
       <main className="bh-acceso">
@@ -507,36 +535,15 @@ export default function Registro() {
                   />
                 </div>
 
-                <div className="registro-fila">
-                  <div className="bh-campo">
-                    <label htmlFor="ciudad">Ciudad</label>
-                    <input
-                      type="text"
-                      id="ciudad"
-                      name="ciudad"
-                      placeholder="Ej: Bogotá"
-                      autoComplete="address-level2"
-                      maxLength={100}
-                      value={formData.ciudad}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="bh-campo">
-                    <label htmlFor="pais">País</label>
-                    <input
-                      type="text"
-                      id="pais"
-                      name="pais"
-                      autoComplete="country-name"
-                      maxLength={100}
-                      value={formData.pais}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
+                {/* AQUÍ ESTÁ LA MAGIA: El componente reutilizable y limpio */}
+                <UbicacionInput 
+                  pais={formData.pais}
+                  ciudad={formData.ciudad}
+                  onPaisChange={handlePaisChange}
+                  onCiudadChange={(ciudad) => setFormData((prev) => ({ ...prev, ciudad }))}
+                  errorPais={Boolean(error && formData.pais.trim() === '')}
+                  errorCiudad={Boolean(error && formData.ciudad.trim() === '')}
+                />
               </section>
 
               <section className="registro-seccion">
@@ -590,7 +597,6 @@ export default function Registro() {
                 </ul>
               </section>
 
-              {/* Botón para pasar al Paso 2 */}
               <button
                 type="button"
                 className="btn btn--primary bh-acceso__boton"
@@ -628,8 +634,6 @@ export default function Registro() {
                 </div>
               ) : (
                 <div className="kyc-formulario">
-                  
-                  {/* Carga de Documentos */}
                   <div className="kyc-grid-documentos">
                     <label className={`kyc-upload-box ${docFrente ? 'kyc-upload-box--cargado' : ''}`}>
                       <input
@@ -672,7 +676,6 @@ export default function Registro() {
                     </label>
                   </div>
 
-                  {/* Selfie Biométrica */}
                   <label className={`kyc-selfie-box ${selfie ? 'kyc-selfie-box--cargado' : ''}`}>
                     <input
                       type="file"

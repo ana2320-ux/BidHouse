@@ -1,0 +1,19 @@
+/* Mismo aspecto que el selector de prefijo (PhoneInput.css). Si cambias uno, cambia el otro. */
+.ubicacion-select { position: relative; }
+.ubicacion-select__boton { width: 100%; height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ubicacion-select__boton:hover:not(:disabled), .ubicacion-select__boton:focus-visible { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(24, 94, 148, .12); }
+.ubicacion-select__boton:disabled { cursor: not-allowed; background: var(--gray-light); color: var(--gray-mid); }
+.ubicacion-select__boton--error { border-color: #b42318; }
+.ubicacion-select__valor, .ubicacion-select__opcion { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ubicacion-select__valor > span, .ubicacion-select__opcion > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ubicacion-select__valor--vacio { color: var(--gray-mid); }
+.ubicacion-select img { width: 20px; height: 14px; flex-shrink: 0; object-fit: cover; border-radius: 2px; }
+.ubicacion-select__menu { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: 100%; min-width: 260px; max-height: 310px; overflow: hidden; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); box-shadow: 0 10px 24px rgba(20, 35, 53, .16); }
+.ubicacion-select__buscar { width: 100%; height: 40px; margin-bottom: 6px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: inherit; }
+.ubicacion-select__buscar:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(24, 94, 148, .12); }
+.ubicacion-select__opciones { max-height: 240px; overflow-y: auto; }
+.ubicacion-select__opcion { width: 100%; display: flex; padding: 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
+.ubicacion-select__opcion:hover, .ubicacion-select__opcion[aria-selected="true"] { background: var(--gray-light); color: var(--blue-dark); }
+.ubicacion-select__vacio { display: block; padding: 12px 10px; color: var(--gray-mid); font-size: .78rem; }
+@media (max-width: 620px) { .ubicacion-select__menu { min-width: 0; } }
+
