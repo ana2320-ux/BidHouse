@@ -19,6 +19,11 @@ create table if not exists public.membresias (
   renovacion_cancelada boolean not null default false,
   mercadopago_preapproval_id text unique,
   mercadopago_payment_id text,
+  precio numeric(14, 2),
+  moneda text not null default 'USD',
+  metodo_pago text,
+  estado_pago text,
+  fecha_pago timestamptz,
   creado_en timestamptz not null default now(),
   actualizado_en timestamptz not null default now()
 );

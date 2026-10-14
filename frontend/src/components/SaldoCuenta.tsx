@@ -79,7 +79,7 @@ export function SaldoCuenta() {
   };
 
   return (
-    <section className="saldo">
+    <section className="saldo" id="saldo">
       <div className="saldo__cifras">
         <div>
           <span className="stat-label">SALDO DISPONIBLE</span>

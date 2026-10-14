@@ -7,7 +7,7 @@ import PreferenciasPanel from '../components/PreferenciasPanel';
 import PremiumBadge from '../components/PremiumBadge';
 import { ModalLogistica } from '../components/OpcionesEntrega';
 import { puedeCoordinarEntrega } from '../lib/logistica';
-import type { EstadoMembresia } from '../lib/membresia';
+import { useMembresia } from '../lib/useMembresia';
 import './Perfil.css';
 
 // Forma de la respuesta de GET /api/usuarios/perfil (ver ServicioUsuario.perfil()).
@@ -72,9 +72,9 @@ export default function Perfil() {
 function PerfilConSesion() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
-  const [membresia, setMembresia] = useState<EstadoMembresia | null>(null);
   const [transaccionLogistica, setTransaccionLogistica] = useState<PerfilData['transacciones'][number] | null>(null);
   const [error, setError] = useState('');
+  const { estado: membresia, cargando: cargandoMembresia, error: errorMembresia } = useMembresia(true);
 
   useEffect(() => {
     api<PerfilData>('/api/usuarios/perfil')
@@ -84,7 +84,6 @@ function PerfilConSesion() {
         if (err instanceof ApiError && err.status === 401) navigate('/login', { replace: true });
         else setError(err instanceof ApiError ? err.message : 'No se pudo cargar el perfil. Verifica que el backend esté corriendo.');
       });
-    api<EstadoMembresia>('/api/membresias/estado').then(setMembresia).catch(() => setMembresia({ activa: false, plan: 'gratuito', estado: 'gratuito' }));
   }, [navigate]);
 
   if (error) {
@@ -158,7 +157,14 @@ function PerfilConSesion() {
       <section className={`perfil-membresia ${membresia?.activa ? 'perfil-membresia--activa' : ''}`}>
         <div>
           <p className="perfil-membresia__eyebrow">MEMBRESÍA</p>
-          {membresia?.activa ? (
+          {cargandoMembresia ? (
+            <>
+              <h2>Consultando membresía…</h2>
+              <p>Estamos verificando el plan asociado a tu cuenta.</p>
+            </>
+          ) : errorMembresia ? (
+            <p role="alert">No se pudo verificar la membresía: {errorMembresia}</p>
+          ) : membresia?.activa ? (
             <>
               <div className="perfil-membresia__titulo"><PremiumBadge /><h2>BidLuxury Member</h2></div>
               <p>Estado: <strong>Activa</strong> · Plan {membresia.periodicidad === 'anual' ? 'anual' : 'mensual'} · Vigente hasta {membresia.fechaFin ? new Date(membresia.fechaFin).toLocaleDateString('es-CO') : 'la próxima renovación'}.</p>
@@ -170,8 +176,8 @@ function PerfilConSesion() {
             </>
           )}
         </div>
-        {!membresia?.activa && <Link to="/membresia" className="btn btn--primary">Adquirir membresía</Link>}
-        {membresia?.activa && <Link to="/membresia" className="btn btn--outline">Administrar membresía</Link>}
+        {!cargandoMembresia && !errorMembresia && !membresia?.activa && <Link to="/membresia" className="btn btn--primary">Adquirir membresía</Link>}
+        {!cargandoMembresia && !errorMembresia && membresia?.activa && <Link to="/membresia" className="btn btn--outline">Administrar membresía</Link>}
       </section>
 
       <section className="profile-dashboard">

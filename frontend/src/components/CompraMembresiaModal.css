@@ -1,0 +1,141 @@
+.compra-membresia-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 27, 43, .5);
+}
+
+.compra-membresia-modal__caja {
+  position: relative;
+  width: min(100%, 500px);
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 0 24px 70px rgba(20, 35, 53, .24);
+}
+
+.compra-membresia-modal__cerrar {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--gray-mid);
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.compra-membresia-modal__caja h2 {
+  margin: 4px 0 8px;
+  color: var(--ink);
+}
+
+.compra-membresia-modal__plan,
+.compra-membresia-modal__nota {
+  color: var(--gray-mid);
+}
+
+.compra-membresia-modal__resumen {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+  padding: 16px;
+  border-radius: 10px;
+  background: #f7f9fb;
+}
+
+.compra-membresia-modal__resumen div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.compra-membresia-modal__resumen dt { color: var(--gray-mid); }
+.compra-membresia-modal__resumen dd { margin: 0; color: var(--ink); font-weight: 700; }
+
+.compra-membresia-modal__error,
+.compra-membresia-modal__insuficiente {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 9px;
+}
+
+.compra-membresia-modal__error { background: #fee2e2; color: #991b1b; }
+
+.compra-membresia-modal__insuficiente {
+  display: grid;
+  gap: 7px;
+  background: #fff8e8;
+  color: #7b5510;
+}
+
+.compra-membresia-modal__insuficiente .btn { width: fit-content; margin-top: 4px; }
+
+.compra-membresia-modal__metodos {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.compra-membresia-modal__metodos p {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.compra-membresia-modal__metodo {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.compra-membresia-modal__metodo:hover:not(:disabled) { border-color: var(--blue); }
+.compra-membresia-modal__metodo:disabled { cursor: not-allowed; opacity: .55; }
+.compra-membresia-modal__metodo--seleccionado {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(218, 155, 17, .18);
+}
+.compra-membresia-modal__metodo strong { font-size: .98rem; }
+.compra-membresia-modal__metodo span {
+  color: var(--gray-mid);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.compra-membresia-modal__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.compra-membresia-modal__acciones .btn { min-width: 145px; }
+.compra-membresia-modal__cambiar {
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font-weight: 700;
+  cursor: pointer;
+}
+.compra-membresia-modal__cambiar:disabled { opacity: .55; cursor: not-allowed; }
+.compra-membresia-modal__nota { margin: 18px 0 0; font-size: .78rem; line-height: 1.45; }
+
+@media (max-width: 480px) {
+  .compra-membresia-modal__caja { padding: 28px 20px 22px; }
+  .compra-membresia-modal__acciones { flex-direction: column-reverse; }
+  .compra-membresia-modal__acciones .btn { width: 100%; }
+}

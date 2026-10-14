@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiError, api } from '../api';
 import { BENEFICIOS_MEMBER, dineroMembresia, PRECIO_MEMBER_FALLBACK, type EstadoMembresia, type PlanMembresia } from '../lib/membresia';
+import { useMembresia } from '../lib/useMembresia';
 import { leerSesion } from '../lib/sesion';
 import PremiumBadge from '../components/PremiumBadge';
+import CompraMembresiaModal from '../components/CompraMembresiaModal';
 import './Membresia.css';
 
 const PLANES_FALLBACK: PlanMembresia[] = [
@@ -17,18 +19,20 @@ export default function Membresia() {
   const navigate = useNavigate();
   const [periodicidad, setPeriodicidad] = useState<'mensual' | 'anual'>('mensual');
   const [planes, setPlanes] = useState<PlanMembresia[]>(PLANES_FALLBACK);
-  const [estado, setEstado] = useState<EstadoMembresia | null>(null);
   const [procesando, setProcesando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
   const [error, setError] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [saldoDisponible, setSaldoDisponible] = useState<number | null>(null);
+  const [cargandoSaldo, setCargandoSaldo] = useState(false);
+  const [errorCompra, setErrorCompra] = useState('');
+  const compraVersion = useRef(0);
   const haySesion = Boolean(leerSesion());
+  const { estado, cargando: cargandoEstado, error: errorEstado, setEstado } = useMembresia(haySesion);
 
   useEffect(() => {
     api<PlanMembresia[]>('/api/membresias/planes').then(setPlanes).catch(() => undefined);
-    if (!haySesion) return;
-    api<EstadoMembresia>('/api/membresias/estado')
-      .then(setEstado)
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'No se pudo consultar tu membresía.'));
   }, [haySesion]);
 
   const planElegido = useMemo(
@@ -36,24 +40,101 @@ export default function Membresia() {
     [planes, periodicidad],
   );
 
-  const adquirir = async () => {
+  const adquirir = () => {
     setError('');
+    setAviso('');
+    setErrorCompra('');
     if (!haySesion) {
       navigate('/login', { state: { desde: '/membresia' } });
       return;
     }
-    setProcesando(true);
+    if (cargandoEstado || errorEstado || !estado) {
+      setError(errorEstado || 'Espera a que podamos verificar tu membresía antes de iniciar el pago.');
+      return;
+    }
+    if (estado.activa) {
+      setError('Ya tienes una membresía activa.');
+      return;
+    }
+
+    compraVersion.current += 1;
+    setProcesando(false);
+    setSaldoDisponible(null);
+    setCargandoSaldo(false);
+    setErrorCompra('');
+    setModalAbierto(true);
+  };
+
+  const elegirSaldo = async () => {
+    const version = compraVersion.current;
+    setErrorCompra('');
+    setCargandoSaldo(true);
     try {
-      const respuesta = await api<{ url: string }>('/api/membresias/checkout', {
+      const respuesta = await api<{ disponible: number }>('/api/pagos/saldo');
+      if (version !== compraVersion.current) return;
+      setSaldoDisponible(respuesta.disponible);
+    } catch (err) {
+      if (version !== compraVersion.current) return;
+      setErrorCompra(err instanceof ApiError ? err.message : 'No se pudo consultar tu saldo.');
+    } finally {
+      if (version === compraVersion.current) setCargandoSaldo(false);
+    }
+  };
+
+  const confirmarCompra = async () => {
+    const version = compraVersion.current;
+    setProcesando(true);
+    setErrorCompra('');
+    try {
+      const respuesta = await api<{ estado: EstadoMembresia; saldoDisponible: number }>('/api/membresias/comprar-con-saldo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ periodicidad }),
       });
+      if (version !== compraVersion.current) return;
+      setEstado(respuesta.estado);
+      setSaldoDisponible(respuesta.saldoDisponible);
+      setModalAbierto(false);
+      setAviso(`Membresía Premium activada. Nuevo saldo disponible: $${respuesta.saldoDisponible.toLocaleString('en-US')} USD.`);
+    } catch (err) {
+      if (version !== compraVersion.current) return;
+      setErrorCompra(err instanceof ApiError ? err.message : 'No se pudo completar la compra.');
+    } finally {
+      if (version === compraVersion.current) setProcesando(false);
+    }
+  };
+
+  const pagarConMercadoPago = async () => {
+    const version = compraVersion.current;
+    setProcesando(true);
+    setErrorCompra('');
+    try {
+      const respuesta = await api<{ url: string }>('/api/membresias/checkout-mercadopago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ periodicidad }),
+      });
+      if (version !== compraVersion.current) return;
       window.location.assign(respuesta.url);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo iniciar el pago.');
+      if (version !== compraVersion.current) return;
+      setErrorCompra(err instanceof ApiError ? err.message : 'No se pudo iniciar el pago con Mercado Pago.');
       setProcesando(false);
     }
+  };
+
+  const cerrarModal = () => {
+    compraVersion.current += 1;
+    setModalAbierto(false);
+    setProcesando(false);
+    setCargandoSaldo(false);
+    setSaldoDisponible(null);
+    setErrorCompra('');
+  };
+
+  const irARecargar = () => {
+    cerrarModal();
+    navigate('/perfil#saldo');
   };
 
   const cancelarRenovacion = async () => {
@@ -77,7 +158,8 @@ export default function Membresia() {
           <p>Accede a activos exclusivos y participa en subastas reservadas para miembros.</p>
         </header>
 
-        {error && <p className="membresia-error" role="alert">{error}</p>}
+        {(error || errorEstado) && <p className="membresia-error" role="alert">{error || errorEstado}</p>}
+        {aviso && <p className="membresia-aviso" role="status">{aviso}</p>}
 
         <div className="membresia-toggle" role="group" aria-label="Periodicidad de la membresía">
           <button type="button" className={periodicidad === 'mensual' ? 'activo' : ''} onClick={() => setPeriodicidad('mensual')}>Mensual</button>
@@ -90,7 +172,9 @@ export default function Membresia() {
             <h2>Explora BidLuxury</h2>
             <strong className="membresia-plan__precio">$0 <small>USD</small></strong>
             <ul>{beneficiosGratis.map((beneficio) => <li key={beneficio}>{beneficio}</li>)}</ul>
-            <button type="button" className="btn btn--outline" disabled>{estado?.activa ? 'Incluido en tu cuenta' : 'Plan actual'}</button>
+            <button type="button" className="btn btn--outline" disabled>
+              {cargandoEstado ? 'Consultando…' : errorEstado ? 'No disponible' : estado?.activa ? 'No es tu plan actual' : 'Plan actual'}
+            </button>
           </article>
 
           <article className="membresia-plan membresia-plan--premium">
@@ -99,7 +183,12 @@ export default function Membresia() {
             <strong className="membresia-plan__precio">{dineroMembresia(planElegido.precioUsd)} <small>/ {planElegido.unidad}</small></strong>
             <p className="membresia-plan__renovacion">{planElegido.renovacion}. Sin beneficios activados hasta confirmar el pago.</p>
             <ul>{BENEFICIOS_MEMBER.map((beneficio) => <li key={beneficio}>{beneficio}</li>)}</ul>
-            {estado?.activa ? (
+            {cargandoEstado ? (
+              <div className="membresia-plan__activa" aria-live="polite">
+                <strong>Consultando tu membresía…</strong>
+                <span>No se habilitará una nueva compra hasta verificar el estado actual.</span>
+              </div>
+            ) : estado?.activa ? (
               <div className="membresia-plan__activa">
                 <strong>★ Membresía activa</strong>
                 <span>Vigente hasta {estado.fechaFin ? new Date(estado.fechaFin).toLocaleDateString('es-CO') : 'la próxima renovación'}.</span>
@@ -107,8 +196,13 @@ export default function Membresia() {
                 {estado.renovacionCancelada && <span className="membresia-plan__avisorenovacion">La renovación está cancelada; mantienes tus beneficios hasta la fecha indicada.</span>}
               </div>
             ) : (
-              <button type="button" className="btn btn--primary membresia-plan__cta" onClick={adquirir} disabled={procesando}>
-                {procesando ? 'Procesando pago…' : 'Adquirir membresía'}
+              <button
+                type="button"
+                className="btn btn--primary membresia-plan__cta"
+                onClick={adquirir}
+                disabled={procesando || (haySesion && (Boolean(errorEstado) || !estado))}
+              >
+                {errorEstado ? 'Verificación no disponible' : 'Adquirir membresía'}
               </button>
             )}
           </article>
@@ -130,6 +224,20 @@ export default function Membresia() {
           {!haySesion && <p className="membresia-login">¿Ya tienes una cuenta? <Link to="/login">Inicia sesión para continuar.</Link></p>}
         </section>
       </div>
+      <CompraMembresiaModal
+        key={modalAbierto ? 'modal-abierto' : 'modal-cerrado'}
+        abierto={modalAbierto}
+        plan={planElegido}
+        saldoDisponible={saldoDisponible}
+        cargandoSaldo={cargandoSaldo}
+        procesando={procesando}
+        error={errorCompra}
+        alCerrar={cerrarModal}
+        alElegirSaldo={elegirSaldo}
+        alConfirmar={confirmarCompra}
+        alPagarMercadoPago={pagarConMercadoPago}
+        alRecargar={irARecargar}
+      />
     </main>
   );
 }

@@ -40,6 +40,18 @@ public class ControladorMembresia {
         return servicio.iniciarCheckout(jwt.getSubject(), solicitud);
     }
 
+    @PostMapping("/comprar-con-saldo")
+    public Map<String, Object> comprarConSaldo(@AuthenticationPrincipal Jwt jwt,
+                                               @RequestBody SolicitudMembresia solicitud) {
+        return servicio.comprarConSaldo(jwt.getSubject(), solicitud);
+    }
+
+    @PostMapping("/checkout-mercadopago")
+    public Map<String, Object> checkoutMercadoPago(@AuthenticationPrincipal Jwt jwt,
+                                                   @RequestBody SolicitudMembresia solicitud) {
+        return servicio.iniciarCheckoutMercadoPago(jwt.getSubject(), solicitud);
+    }
+
     @PostMapping("/confirmar")
     public Map<String, Object> confirmar(@AuthenticationPrincipal Jwt jwt,
                                          @RequestBody Map<String, String> cuerpo) {
