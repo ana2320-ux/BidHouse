@@ -5,6 +5,8 @@ import { leerSesion } from '../lib/sesion';
 import { SaldoCuenta } from '../components/SaldoCuenta';
 import PreferenciasPanel from '../components/PreferenciasPanel';
 import PremiumBadge from '../components/PremiumBadge';
+import { ModalLogistica } from '../components/OpcionesEntrega';
+import { puedeCoordinarEntrega } from '../lib/logistica';
 import type { EstadoMembresia } from '../lib/membresia';
 import './Perfil.css';
 
@@ -71,6 +73,7 @@ function PerfilConSesion() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
   const [membresia, setMembresia] = useState<EstadoMembresia | null>(null);
+  const [transaccionLogistica, setTransaccionLogistica] = useState<PerfilData['transacciones'][number] | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -213,11 +216,24 @@ function PerfilConSesion() {
               </p>
             )}
             {perfil.transacciones.map((t) => (
-              <Contrato key={t.id} transaccion={t} />
+              <Contrato key={t.id} transaccion={t} onCoordinarEntrega={setTransaccionLogistica} />
             ))}
           </div>
         </div>
       </section>
+
+      {transaccionLogistica && (
+        <ModalLogistica
+          abierto
+          contrato={{ id: transaccionLogistica.id, estado: transaccionLogistica.estado, rol: transaccionLogistica.rol }}
+          alCerrar={() => setTransaccionLogistica(null)}
+          onIrChat={() => {
+            if (!transaccionLogistica.subastas?.id) return;
+            setTransaccionLogistica(null);
+            navigate(`/activo/${transaccionLogistica.subastas.id}#chat-contrato-${transaccionLogistica.id}`);
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -390,7 +406,13 @@ function ResumenContratos({ porEstado }: { porEstado: Record<string, number> }) 
 }
 
 // ── Un contrato con su barra de progreso por etapas ──
-function Contrato({ transaccion: t }: { transaccion: PerfilData['transacciones'][number] }) {
+function Contrato({
+  transaccion: t,
+  onCoordinarEntrega,
+}: {
+  transaccion: PerfilData['transacciones'][number];
+  onCoordinarEntrega: (transaccion: PerfilData['transacciones'][number]) => void;
+}) {
   // Posición de su estado en ETAPAS; si es uno desconocido (ej. "cancelada"),
   // -1: no se marca ninguna etapa y se muestra el estado tal cual.
   const actual = ETAPAS.findIndex((e) => e.estado === t.estado);
@@ -400,7 +422,7 @@ function Contrato({ transaccion: t }: { transaccion: PerfilData['transacciones']
     (t.rol === 'comprador' && (t.estado === 'pendiente' || t.estado === 'enviado')) ||
     (t.rol === 'vendedor' && t.estado === 'en_custodia');
   const contenido = (
-    <article className={teToca ? 'activity-item contrato contrato--te-toca' : 'activity-item contrato'}>
+    <>
       <div className="activity-item__info">
         <h4>{t.subastas?.titulo ?? 'Subasta'}</h4>
         <p>
@@ -416,13 +438,24 @@ function Contrato({ transaccion: t }: { transaccion: PerfilData['transacciones']
       <span className={teToca ? 'badge-action contrato__te-toca' : 'badge-action neutral'}>
         {teToca ? 'Te toca →' : ETAPAS[actual]?.nombre ?? t.estado}
       </span>
-    </article>
+    </>
   );
+  const puedeCoordinar = puedeCoordinarEntrega({ id: t.id, estado: t.estado, rol: t.rol });
+
   // Los activos vendidos ya no salen en el catálogo: este es el camino para
   // volver a su detalle y gestionar el contrato.
-  return t.subastas?.id
-    ? <Link to={`/activo/${t.subastas.id}`} className="contrato__enlace">{contenido}</Link>
-    : contenido;
+  return (
+    <article className={teToca ? 'activity-item contrato contrato--te-toca' : 'activity-item contrato'}>
+      {t.subastas?.id
+        ? <Link to={`/activo/${t.subastas.id}`} className="contrato__enlace">{contenido}</Link>
+        : contenido}
+      {puedeCoordinar && (
+        <button type="button" className="contrato__logistica" onClick={() => onCoordinarEntrega(t)}>
+          🚚 Coordinar entrega
+        </button>
+      )}
+    </article>
+  );
 }
 
 function IconoCamara() {

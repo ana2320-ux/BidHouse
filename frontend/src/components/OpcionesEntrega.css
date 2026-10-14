@@ -1,0 +1,163 @@
+.logistica-opciones {
+  padding: 16px;
+  border: 1px solid #263b5b;
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.logistica-opciones__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.logistica-opciones__cabecera h2 {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.logistica-opciones__icono {
+  font-size: 1.05rem;
+}
+
+.logistica-opciones__intro,
+.logistica-opciones__nota,
+.logistica-opciones__disclaimer {
+  color: var(--gray-mid);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.logistica-opciones__lista {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.logistica-opcion {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+}
+
+.logistica-opcion > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logistica-opcion strong {
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
+.logistica-opcion span {
+  color: var(--gray-mid);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.logistica-opcion a,
+.logistica-opcion button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid var(--blue);
+  border-radius: 7px;
+  color: var(--blue);
+  background: var(--white);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.logistica-opcion a:hover,
+.logistica-opcion button:hover {
+  color: var(--white);
+  background: var(--blue);
+  transform: translateY(-1px);
+}
+
+.logistica-opcion a:focus-visible,
+.logistica-opcion button:focus-visible,
+.logistica-modal__cerrar:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.logistica-opciones__nota {
+  margin-top: 14px;
+}
+
+.logistica-opciones__disclaimer {
+  margin-top: 10px;
+  color: #8791a1;
+  font-size: 0.68rem;
+}
+
+.logistica-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 35, 53, 0.58);
+}
+
+.logistica-modal {
+  position: relative;
+  width: min(100%, 680px);
+  max-height: min(92vh, 720px);
+  overflow-y: auto;
+  padding: 30px;
+  border: 1px solid rgba(31, 68, 125, 0.35);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 24px 80px rgba(15, 63, 102, 0.28);
+  outline: none;
+}
+
+.logistica-modal__cerrar {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: 0;
+  background: transparent;
+  color: var(--gray-mid);
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.logistica-opciones--modal {
+  padding-top: 8px;
+}
+
+@media (max-width: 700px) {
+  .logistica-opciones__lista {
+    grid-template-columns: 1fr;
+  }
+
+  .logistica-modal {
+    padding: 26px 20px;
+  }
+}

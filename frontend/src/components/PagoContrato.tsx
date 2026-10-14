@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, usd } from '../api';
 import { ChatContrato } from './ChatContrato';
+import { OpcionesEntrega } from './OpcionesEntrega';
 import './PagoContrato.css';
 
 // El contrato de garantía de quien mira la subasta (ServicioSubasta.contratoDe()).
@@ -47,9 +48,14 @@ const fechaCorta = (valor?: string | null) =>
 // Las acciones: el comprador paga, el vendedor marca el envío, el comprador
 // confirma que le llegó (eso libera el pago) o reporta un problema.
 export function PagoContrato({ contrato, alPagar }: { contrato: MiContrato; alPagar: () => void }) {
+  const irAlChat = () => {
+    document.getElementById(`chat-contrato-${contrato.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <>
       <EtapaContrato contrato={contrato} alPagar={alPagar} />
+      <OpcionesEntrega contrato={contrato} onIrChat={irAlChat} />
       <HitosBlockchain contrato={contrato} />
       <ChatContrato contratoId={contrato.id} rol={contrato.rol} />
     </>
