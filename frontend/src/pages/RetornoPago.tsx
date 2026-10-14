@@ -7,7 +7,7 @@ import './RetornoPago.css';
 // Respuesta de POST /api/pagos/confirmar (ServicioPagos.confirmar()).
 interface Confirmacion {
   estadoPago: string;              // approved | pending | in_process | rejected ...
-  tipo?: 'contrato' | 'recarga';
+  tipo?: 'contrato' | 'recarga' | 'membresia';
   subastaId?: string;
   monto?: number;
   saldo?: number;
@@ -93,6 +93,15 @@ function Confirmar({ search }: { search: string }) {
         <h1>¡Recarga exitosa!</h1>
         <p>Se agregaron {usd(resultado.monto ?? 0)} a tu saldo. Saldo disponible: {usd(resultado.saldo ?? 0)}.</p>
         <Link to="/perfil" className="btn btn--primary retorno__boton">Ir a mi perfil</Link>
+      </>
+    );
+  } else if (resultado.estadoPago === 'approved' && resultado.tipo === 'membresia') {
+    contenido = (
+      <>
+        <span className="retorno__icono retorno__icono--ok">✓</span>
+        <h1>¡Membresía Premium activada!</h1>
+        <p>Tu pago fue aprobado y BidLuxury Member ya está activo en tu cuenta.</p>
+        <Link to="/perfil" className="btn btn--primary retorno__boton">Ver mi perfil</Link>
       </>
     );
   } else if (resultado.estadoPago === 'pending' || resultado.estadoPago === 'in_process') {

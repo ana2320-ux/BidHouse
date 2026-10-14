@@ -81,6 +81,22 @@ final class FuncionesBd {
                     "Se venció el plazo de 48 horas para pagar este contrato.");
             case "SALDO_INSUFICIENTE" -> new ResponseStatusException(HttpStatus.CONFLICT,
                     "No te alcanza el saldo: tienes " + usd(detalle) + ". Recarga saldo o paga con Mercado Pago.");
+            case "SALDO_MEMBRESIA_INSUFICIENTE" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No te alcanza el saldo para esa membresía: tienes " + usd(detalle) + ". Recarga saldo para continuar.");
+            case "MEMBRESIA_YA_ACTIVA" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ya tienes una membresía Premium activa.");
+            case "MEMBRESIA_COMPRA_PENDIENTE" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ya tienes una compra de membresía pendiente. Verifica su estado antes de iniciar otra.");
+            case "MEMBRESIA_NO_EXISTE" -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No encontramos la compra pendiente de esta membresía.");
+            case "MEMBRESIA_PAGO_NO_PENDIENTE" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Esta compra de membresía ya no está pendiente.");
+            case "PAGO_MEMBRESIA_DUPLICADO" -> new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Este pago de membresía ya fue utilizado.");
+            case "PAGO_MEMBRESIA_INVALIDO" -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Mercado Pago no devolvió un identificador de pago válido.");
+            case "PERIODICIDAD_INVALIDA" -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La periodicidad debe ser mensual o anual.");
             case "MONTO_NO_COINCIDE" -> new ResponseStatusException(HttpStatus.CONFLICT,
                     "El monto pagado en Mercado Pago no coincide con el del contrato.");
             // De la entrega (backend/sql/fase4b_entrega.sql):

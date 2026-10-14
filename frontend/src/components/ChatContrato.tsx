@@ -65,7 +65,7 @@ export function ChatContrato({ contratoId, rol }: { contratoId: string; rol: 'co
   };
 
   return (
-    <section className="chat-contrato" aria-label={`Chat con el ${otro}`}>
+    <section id={`chat-contrato-${contratoId}`} className="chat-contrato" aria-label={`Chat con el ${otro}`}>
       <header className="chat-contrato__cabecera">
         <strong>💬 Chat con el {otro}</strong>
         <span>Acuerden aquí la entrega. Por seguridad, nunca pagues por fuera de BidLuxury.</span>

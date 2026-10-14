@@ -80,6 +80,11 @@ function construirPasos(subasta: SubastaDetalle, verificado: boolean): PasoTrans
   const estado = subasta.estado?.toLowerCase() ?? '';
   const finalizada = ESTADOS_FINALES.has(estado);
   const activa = subasta.esta_activa === true || estado === 'activa';
+  const contrato = subasta.miContrato;
+  const estadoContrato = contrato?.estado?.toLowerCase() ?? '';
+  const contratoCancelado = estadoContrato === 'cancelada';
+  const pagoCompletado = !!contrato && !['pendiente', 'cancelada'].includes(estadoContrato);
+  const entregaConfirmada = estadoContrato === 'completada' || estadoContrato === 'recibido';
 
   return [
     {
@@ -93,19 +98,46 @@ function construirPasos(subasta: SubastaDetalle, verificado: boolean): PasoTrans
       estado: activa ? 'complete' : 'pending',
     },
     {
-      titulo: 'Estado de la subasta',
-      descripcion: `Estado informado: ${textoEstado(subasta.estado)}.`,
-      estado: finalizada ? 'complete' : 'current',
-    },
-    {
       titulo: 'Cierre de subasta',
-      descripcion: subasta.fecha_fin ? `Fecha registrada: ${fecha(subasta.fecha_fin)}.` : 'Sin fecha de cierre disponible.',
+      descripcion: finalizada
+        ? (subasta.fecha_fin ? `Fecha registrada: ${fecha(subasta.fecha_fin)}.` : 'La subasta ya terminó.')
+        : `Estado informado: ${textoEstado(subasta.estado)}.`,
       estado: finalizada ? 'complete' : 'pending',
     },
     {
-      titulo: 'Transferencia del activo',
-      descripcion: 'Este proceso se habilitará según las condiciones de la operación.',
-      estado: 'pending',
+      titulo: 'Pago',
+      descripcion: !contrato
+        ? 'Se habilita cuando exista una compra adjudicada.'
+        : contratoCancelado
+          ? 'El contrato fue cancelado y no continúa el proceso de pago.'
+          : estadoContrato === 'pendiente'
+            ? 'El comprador tiene un pago pendiente.'
+            : 'El pago fue recibido y está gestionándose en custodia.',
+      estado: contratoCancelado ? 'pending' : pagoCompletado ? 'complete' : contrato ? 'current' : 'pending',
+    },
+    {
+      titulo: 'Coordinación de entrega',
+      descripcion: !contrato
+        ? 'Se habilita para el comprador cuando exista un contrato.'
+        : contratoCancelado
+          ? 'No aplica porque el contrato fue cancelado.'
+          : estadoContrato === 'pendiente'
+            ? 'Se habilitará después de confirmar el pago.'
+            : estadoContrato === 'en_custodia'
+              ? 'Coordina la entrega con el vendedor y el operador que elijas.'
+              : estadoContrato === 'enviado'
+                ? 'El activo fue enviado; falta confirmar la recepción.'
+                : 'La entrega ya fue confirmada.',
+      estado: entregaConfirmada ? 'complete' : contrato && !contratoCancelado && pagoCompletado ? 'current' : 'pending',
+    },
+    {
+      titulo: 'Transferencia final',
+      descripcion: entregaConfirmada
+        ? 'La recepción fue confirmada y el contrato quedó liberado.'
+        : contratoCancelado
+          ? 'No se completa la transferencia porque el contrato fue cancelado.'
+          : 'Se completa cuando el comprador confirma que recibió el activo.',
+      estado: entregaConfirmada ? 'complete' : 'pending',
     },
   ];
 }
@@ -155,6 +187,14 @@ export default function DetalleActivo() {
       vigente = false;
     };
   }, [id, version]);
+
+  useEffect(() => {
+    if (!subasta || !window.location.hash) return;
+    const objetivo = decodeURIComponent(window.location.hash.slice(1));
+    requestAnimationFrame(() => {
+      document.getElementById(objetivo)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [subasta]);
 
   const activo = subasta?.activos ?? null;
   const verificado = activo?.esta_verificado === true;

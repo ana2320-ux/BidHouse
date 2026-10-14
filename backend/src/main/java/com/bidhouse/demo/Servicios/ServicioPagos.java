@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 // Referencias externas que viajan a Mercado Pago y vuelven en el pago:
 //   "contrato:<idTransaccion>"            → pagar un contrato
 //   "recarga:<idUsuario>:<uuid aleatorio>" → recargar saldo
+//   "premium_membership:<idMembresia>"    → activar una compra única
 @Service
 public class ServicioPagos {
 
@@ -26,10 +27,12 @@ public class ServicioPagos {
 
     private final SupabaseClient db;
     private final MercadoPagoClient mercadoPago;
+    private final ServicioMembresia servicioMembresia;
 
-    public ServicioPagos(SupabaseClient db, MercadoPagoClient mercadoPago) {
+    public ServicioPagos(SupabaseClient db, MercadoPagoClient mercadoPago, ServicioMembresia servicioMembresia) {
         this.db = db;
         this.mercadoPago = mercadoPago;
+        this.servicioMembresia = servicioMembresia;
     }
 
     // ── Pagar un contrato ──
@@ -86,7 +89,20 @@ public class ServicioPagos {
         Map<String, Object> respuesta = new LinkedHashMap<>();
         respuesta.put("estadoPago", String.valueOf(pago.get("status")));
         if (!"approved".equals(pago.get("status"))) {
-            // pending / in_process / rejected: nada que registrar todavía.
+            // pending / in_process / rejected: no se activa, pero se conserva
+            // el estado de una membresía para poder reintentar sin duplicarla.
+            String referencia = String.valueOf(pago.get("external_reference"));
+            if (referencia.startsWith("premium_membership:")) {
+                String idMembresia;
+                try {
+                    idMembresia = UUID.fromString(referencia.substring("premium_membership:".length())).toString();
+                } catch (IllegalArgumentException e) {
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                            "Mercado Pago devolvió una referencia de membresía inválida.");
+                }
+                respuesta.putAll(servicioMembresia.actualizarEstadoPagoMercadoPago(
+                        idUsuario, idMembresia, idPago, String.valueOf(pago.get("status"))));
+            }
             return respuesta;
         }
         Map<String, Object> registrado = registrar(pago, idUsuario);
@@ -128,6 +144,16 @@ public class ServicioPagos {
         }
         if (referencia.startsWith("contrato:")) {
             return !db.consultar("/transacciones?referencia_pago=eq." + idPago + "&select=id&limit=1").isEmpty();
+        }
+        if (referencia.startsWith("premium_membership:")) {
+            String idMembresia;
+            try {
+                idMembresia = UUID.fromString(referencia.substring("premium_membership:".length())).toString();
+            } catch (IllegalArgumentException e) {
+                return true;
+            }
+            return !db.consultar("/membresias?id=eq." + idMembresia + "&mercadopago_payment_id=eq." + idPago
+                    + "&estado=eq.activa&estado_pago=eq.aprobado&select=id&limit=1").isEmpty();
         }
         return true; // no es de BidHouse (ej. movimientos internos del sandbox)
     }
@@ -177,6 +203,22 @@ public class ServicioPagos {
             respuesta.put("tipo", "recarga");
             respuesta.put("monto", movimiento.get("monto"));
             respuesta.put("saldo", movimiento.get("saldo_despues"));
+            return respuesta;
+        }
+
+        if (referencia.startsWith("premium_membership:")) {
+            String idMembresia;
+            try {
+                idMembresia = UUID.fromString(referencia.substring("premium_membership:".length())).toString();
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+            if (!"COP".equalsIgnoreCase(String.valueOf(pago.get("currency_id")))) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "El pago de la membresía no está expresado en COP.");
+            }
+            respuesta.putAll(servicioMembresia.activarPorPagoMercadoPago(
+                    idUsuario, idMembresia, idPago, cobrado));
             return respuesta;
         }
         return null;
