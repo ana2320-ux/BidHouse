@@ -180,8 +180,47 @@ export default function UbicacionInput({
     fetchUbicaciones();
   }, []);
 
-  // El valor guardado sigue siendo el nombre en inglés de la API (Registro valida
-  // contra esa misma lista); solo la etiqueta se traduce.
+  // La lista general (/countries) trae las ciudades recortadas: a Colombia le
+  // faltan Bogotá y Medellín. /countries/cities devuelve la lista completa, así
+  // que se pide por país al elegirlo. Si falla, se usa la recortada.
+  const [ciudadesDelPais, setCiudadesDelPais] = useState<string[]>([]);
+  const [cargandoCiudades, setCargandoCiudades] = useState(false);
+  const cacheCiudades = useRef(new Map<string, string[]>());
+
+  useEffect(() => {
+    if (!pais || cargando) return;
+    const enCache = cacheCiudades.current.get(pais);
+    if (enCache) {
+      setCiudadesDelPais(enCache);
+      return;
+    }
+    // Si el usuario cambia de país antes de que llegue la respuesta, se descarta.
+    let vigente = true;
+    const respaldo = dataUbicacion.find((item) => item.country === pais)?.cities ?? [];
+    setCargandoCiudades(true);
+    fetch('https://countriesnow.space/api/v0.1/countries/cities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country: pais }),
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        const lista: string[] = !json.error && Array.isArray(json.data) && json.data.length ? json.data : respaldo;
+        cacheCiudades.current.set(pais, lista);
+        if (vigente) setCiudadesDelPais(lista);
+      })
+      .catch((err) => {
+        console.error('Error al cargar las ciudades:', err);
+        if (vigente) setCiudadesDelPais(respaldo);
+      })
+      .finally(() => {
+        if (vigente) setCargandoCiudades(false);
+      });
+    return () => { vigente = false; };
+  }, [pais, cargando, dataUbicacion]);
+
+  // El valor guardado sigue siendo el nombre en inglés de la API (es lo que
+  // espera /countries/cities y lo que ya hay en la BD); solo la etiqueta se traduce.
   const opcionesPais = useMemo<Opcion[]>(() =>
     dataUbicacion
       .map((p) => ({
@@ -192,13 +231,11 @@ export default function UbicacionInput({
       .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es')),
   [dataUbicacion]);
 
-  const opcionesCiudad = useMemo<Opcion[]>(() => {
-    const datosDelPais = dataUbicacion.find((item) => item.country === pais);
-    if (!datosDelPais) return [];
-    return [...new Set(datosDelPais.cities)]
+  const opcionesCiudad = useMemo<Opcion[]>(() =>
+    [...new Set(ciudadesDelPais)]
       .sort((a, b) => a.localeCompare(b, 'es'))
-      .map((c) => ({ valor: c, etiqueta: c }));
-  }, [dataUbicacion, pais]);
+      .map((c) => ({ valor: c, etiqueta: c })),
+  [ciudadesDelPais]);
 
   return (
     <div className="registro-fila">
@@ -226,12 +263,14 @@ export default function UbicacionInput({
           placeholder={
             !pais
               ? 'Primero elige un país'
-              : opcionesCiudad.length === 0 && !cargando
+              : cargando || cargandoCiudades
+              ? 'Cargando ciudades...'
+              : opcionesCiudad.length === 0
               ? 'Sin ciudades disponibles'
               : 'Selecciona una ciudad'
           }
           placeholderBusqueda="Buscar ciudad"
-          deshabilitado={!pais || cargando || opcionesCiudad.length === 0}
+          deshabilitado={!pais || cargando || cargandoCiudades || opcionesCiudad.length === 0}
           error={errorCiudad}
         />
       </div>

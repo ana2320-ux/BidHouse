@@ -57,12 +57,6 @@ export default function Registro() {
   });
   const [telefonoPaisCodigo, setTelefonoPaisCodigo] = useState('CO');
 
-  // ── Estados para la API de Ubicación (Países y Ciudades) ──
-  const [paises, setPaises] = useState<string[]>([]);
-  const [ciudades, setCiudades] = useState<string[]>([]);
-  const [dataUbicacion, setDataUbicacion] = useState<any[]>([]);
-  const [, setCargandoUbicacion] = useState(true);
-
   // ── Documentos y biometría para KYC (Estándar Rappi / Truora) ──
   const [docFrente, setDocFrente] = useState<File | null>(null);
   const [, setDocFrentePreview] = useState<string | null>(null);
@@ -76,33 +70,6 @@ export default function Registro() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // ── Cargar Países y Ciudades desde la API al montar el componente ──
-  useEffect(() => {
-    const fetchUbicaciones = async () => {
-      try {
-        const res = await fetch('https://countriesnow.space/api/v0.1/countries');
-        const json = await res.json();
-        
-        if (!json.error) {
-          setDataUbicacion(json.data);
-          const listaPaises = json.data.map((item: any) => item.country).sort();
-          setPaises(listaPaises);
-
-          // Cargar las ciudades del país que está por defecto en el formData (Colombia)
-          const paisInicial = json.data.find((item: any) => item.country === formData.pais);
-          if (paisInicial) {
-            setCiudades(paisInicial.cities.sort());
-          }
-        }
-      } catch (err) {
-        console.error('Error al cargar la API de países:', err);
-      } finally {
-        setCargandoUbicacion(false);
-      }
-    };
-    fetchUbicaciones();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Manejar cambios en los inputs generales ──
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, type, value } = e.target;
@@ -113,12 +80,10 @@ export default function Registro() {
     });
   };
 
-  // ── Manejar cambio específico de País para actualizar las Ciudades ──
+  // ── Al cambiar de país, la ciudad elegida ya no aplica ──
+  // Las listas de países y ciudades las carga UbicacionInput.
   const handlePaisChange = (paisSeleccionado: string) => {
     setFormData(prev => ({ ...prev, pais: paisSeleccionado, ciudad: '' }));
-    
-    const datosDelPais = dataUbicacion.find(item => item.country === paisSeleccionado);
-    setCiudades(datosDelPais ? datosDelPais.cities.sort() : []);
   };
 
   // ── Manejar carga de fotos para KYC ──
@@ -173,12 +138,13 @@ export default function Registro() {
       setError('Debes proporcionar tu dirección para los envíos.');
       return false;
     }
-    if (formData.pais.trim() === '' || !paises.includes(formData.pais)) {
-      setError('Por favor, selecciona un país válido de la lista.');
+    // UbicacionInput solo deja elegir de su lista, así que basta con que no estén vacíos.
+    if (formData.pais.trim() === '') {
+      setError('Por favor, selecciona tu país.');
       return false;
     }
-    if (formData.ciudad.trim() === '' || (!ciudades.includes(formData.ciudad) && ciudades.length > 0)) {
-      setError('Por favor, selecciona una ciudad válida de la lista.');
+    if (formData.ciudad.trim() === '') {
+      setError('Por favor, selecciona tu ciudad.');
       return false;
     }
     if (!REQUISITOS_PASSWORD.every((r) => r.cumple(formData.password))) {
