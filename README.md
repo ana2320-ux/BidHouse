@@ -37,13 +37,16 @@ tier of the product is branded **BidLuxury**.
 ## Architecture
 
 ```
-┌──────────────┐   HTTPS + JWT   ┌──────────────────┐   REST / RPC   ┌───────────────┐
-│   Frontend   │ ──────────────▶ │     Backend      │ ─────────────▶ │   Supabase    │
-│ React + Vite │                 │   Spring Boot    │                │ Postgres,     │
-└──────────────┘                 │                  │                │ Auth, Storage │
-                                 │                  │ ─────────────▶ Mercado Pago   │
-                                 │                  │ ─────────────▶ Sepolia (web3j)
-                                 └──────────────────┘
+┌──────────────┐  HTTPS + JWT  ┌──────────────┐  REST / RPC  ┌──────────────────────────┐
+│   Frontend   │ ────────────▶ │   Backend    │ ───────────▶ │ Supabase                 │
+│ React + Vite │               │ Spring Boot  │              │ Postgres, Auth, Storage  │
+└──────────────┘               │              │              └──────────────────────────┘
+                               │              │  REST API    ┌──────────────────────────┐
+                               │              │ ───────────▶ │ Mercado Pago             │
+                               │              │              └──────────────────────────┘
+                               │              │  JSON-RPC    ┌──────────────────────────┐
+                               │              │ ───────────▶ │ Sepolia (web3j)          │
+                               └──────────────┘              └──────────────────────────┘
 ```
 
 The backend is the only component that holds secret keys. It validates the
