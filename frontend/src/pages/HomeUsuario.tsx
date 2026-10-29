@@ -192,16 +192,18 @@ export default function HomeUsuario({ sesion }: { sesion: Sesion }) {
 
         <div className="inicio-plus">
           <div>
-            <span className="inicio-plus__etiqueta">BidHouse Plus · Suscripción</span>
-            <h3>Paga menos comisión en cada venta</h3>
-            <p>Para vendedores frecuentes: tu comisión por venta baja del 1% al 0.5%.</p>
+            <span className="inicio-plus__etiqueta">BidLuxury Member · Suscripción</span>
+            <h3>{membresiaActiva ? 'Ya pagas menos comisión en cada venta' : 'Paga menos comisión en cada venta'}</h3>
+            <p>Con la membresía, tu comisión por venta baja del 1% al 0.5%.</p>
           </div>
           <div className="inicio-plus__comision" aria-label="Comisión del 1% al 0.5%">
             <span className="inicio-plus__antes">1%</span>
             <span aria-hidden="true">→</span>
             <span className="inicio-plus__despues">0.5%</span>
           </div>
-          <button type="button" className="btn btn--primary inicio-plus__boton" disabled>Próximamente</button>
+          <Link to="/membresia" className="btn btn--primary inicio-plus__boton">
+            {membresiaActiva ? 'Ver mi membresía' : 'Suscribirme'}
+          </Link>
         </div>
 
         <div className="inicio-servicios__grid">

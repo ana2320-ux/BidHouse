@@ -216,8 +216,7 @@
 }
 
 .inicio-acceso__boton:disabled,
-.inicio-servicio__boton:disabled,
-.inicio-plus__boton:disabled {
+.inicio-servicio__boton:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -382,6 +381,7 @@
 
 .inicio-plus__boton {
   border-radius: 10px;
+  text-align: center;
 }
 
 .inicio-servicios__grid {

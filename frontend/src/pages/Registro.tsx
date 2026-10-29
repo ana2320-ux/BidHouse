@@ -251,12 +251,14 @@ export default function Registro() {
   };
 
   const finalizarRegistro = async (accessToken: string, telefono: string, datosPerfil: Omit<typeof formData, 'password' | 'confirmPassword' | 'telefonoNumero' | 'telefonoPrefijo'>) => {
-    const { documento_identidad, ...datosConNombreBackend } = datosPerfil;
+    // El record del backend (DatosPerfilRegistro) usa camelCase. Si "esVendedor"
+    // no llega, Jackson 3 rechaza todo el JSON: no lo deja en false.
+    const { documento_identidad, es_vendedor, ...datosConNombreBackend } = datosPerfil;
     await api('/api/usuarios/perfil/registro', {
       method: 'POST',
       token: accessToken,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...datosConNombreBackend, documentoIdentidad: documento_identidad, telefono }),
+      body: JSON.stringify({ ...datosConNombreBackend, documentoIdentidad: documento_identidad, esVendedor: es_vendedor, telefono }),
     });
     const sesion = await api<RespuestaLogin>('/api/usuarios/login', {
       method: 'POST',

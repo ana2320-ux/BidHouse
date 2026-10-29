@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiError, api } from '../api';
-import { BENEFICIOS_MEMBER, dineroMembresia, PRECIO_MEMBER_FALLBACK, type EstadoMembresia, type PlanMembresia } from '../lib/membresia';
+import { BENEFICIOS_MEMBER, COMISION_GRATIS, COMISION_MEMBER, dineroMembresia, porcentaje, PRECIO_MEMBER_FALLBACK, type EstadoMembresia, type PlanMembresia } from '../lib/membresia';
 import { useMembresia } from '../lib/useMembresia';
 import { leerSesion } from '../lib/sesion';
 import PremiumBadge from '../components/PremiumBadge';
@@ -13,7 +13,11 @@ const PLANES_FALLBACK: PlanMembresia[] = [
   { plan: 'bidluxury_member', periodicidad: 'anual', precioUsd: PRECIO_MEMBER_FALLBACK.anual, moneda: 'USD', unidad: 'año', renovacion: 'Renovación anual' },
 ];
 
-const beneficiosGratis = ['Explorar activos públicos', 'Participar en subastas estándar', 'Administrar perfil', 'Preferencias personalizadas'];
+const beneficiosGratis = ['Explorar activos públicos', 'Participar en subastas estándar', 'Administrar perfil', 'Preferencias personalizadas', `Comisión por venta del ${porcentaje(COMISION_GRATIS)}`];
+
+// Venta de ejemplo para que el ahorro se vea en dinero y no solo en porcentaje.
+const VENTA_EJEMPLO = 10000;
+const usd = (valor: number) => `$${Math.round(valor).toLocaleString('en-US')} USD`;
 
 export default function Membresia() {
   const navigate = useNavigate();
@@ -158,6 +162,22 @@ export default function Membresia() {
           <p>Accede a activos exclusivos y participa en subastas reservadas para miembros.</p>
         </header>
 
+        <section className="membresia-comision" aria-label={`Comisión por venta: ${porcentaje(COMISION_GRATIS)} sin membresía, ${porcentaje(COMISION_MEMBER)} con membresía`}>
+          <div>
+            <p className="membresia-comision__etiqueta">Comisión por venta</p>
+            <h2>Vende pagando la mitad de comisión</h2>
+            <p>
+              En una venta de {usd(VENTA_EJEMPLO)} pagas {usd(VENTA_EJEMPLO * COMISION_MEMBER)} en vez
+              de {usd(VENTA_EJEMPLO * COMISION_GRATIS)}. La tasa se fija al crear cada contrato de venta.
+            </p>
+          </div>
+          <div className="membresia-comision__tasas" aria-hidden="true">
+            <span className="membresia-comision__antes">{porcentaje(COMISION_GRATIS)}</span>
+            <span>→</span>
+            <span className="membresia-comision__despues">{porcentaje(COMISION_MEMBER)}</span>
+          </div>
+        </section>
+
         {(error || errorEstado) && <p className="membresia-error" role="alert">{error || errorEstado}</p>}
         {aviso && <p className="membresia-aviso" role="status">{aviso}</p>}
 
@@ -213,6 +233,7 @@ export default function Membresia() {
           <div className="membresia-comparacion__tabla" role="table" aria-label="Comparación de planes">
             <div className="membresia-comparacion__fila membresia-comparacion__fila--cabecera" role="row"><span>Beneficio</span><strong>Gratis</strong><strong>Member</strong></div>
             {[
+              ['Comisión por venta', porcentaje(COMISION_GRATIS), porcentaje(COMISION_MEMBER)],
               ['Subastas públicas', '✓', '✓'],
               ['Preferencias', '✓', '✓'],
               ['Subastas premium', '—', '✓'],
