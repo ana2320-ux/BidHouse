@@ -14,9 +14,10 @@
 
 -- 0) Comisión de BidHouse ─────────────────────────────────────
 -- Un solo lugar para la tasa: la usan el cierre de subastas (aquí) y la
--- compra inmediata (fase3_compra.sql). 1 % por venta.
--- ponytail: BidHouse Plus (suscripción) la baja a 0,5 %; cuando exista,
--- recibir el vendedor y devolver 0.005 si está suscrito.
+-- compra inmediata (fase3_compra.sql). 1 % por venta. Con membresía el
+-- vendedor paga 0,5 %: lo aplica un trigger al crear el contrato
+-- (fase8_comision_member.sql). OJO: si vuelves a correr este archivo, el
+-- update de abajo devuelve al 1 % los contratos abiertos de los miembros.
 create or replace function public.comision_plataforma(p_monto numeric)
 returns numeric
 language sql

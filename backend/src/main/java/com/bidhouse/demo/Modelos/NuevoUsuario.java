@@ -17,7 +17,7 @@ public record NuevoUsuario(
         String direccion,
         String ciudad,
         String pais,
-        boolean esVendedor, // boolean primitivo: si no viene en el JSON queda en false
+        boolean esVendedor, // boolean primitivo: si no viene en el JSON, Jackson 3 rechaza la petición (400)
         String password) {
 
     // Mismas reglas que Registro.tsx. Se repiten aquí porque el front se puede
