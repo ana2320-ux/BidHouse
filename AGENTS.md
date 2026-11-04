@@ -342,6 +342,11 @@ Acordadas con el equipo; todavía no están implementadas.
   atascada y bloquea las siguientes de esa billetera (van en orden por nonce).
   `RegistroBlockchain` ofrece el doble de la tarifa y usa el nonce confirmado,
   así una atascada se reemplaza sola en el siguiente intento.
+- El gas de cada transacción se estima con la red, no es un tope fijo: una
+  actualización de Sepolia subió `registrarPago` de ~92 mil a ~350 mil sin tocar
+  el contrato, y un tope de 300 mil la hacía fallar con "Out of gas". Los hitos de
+  un mismo contrato pueden tardar una vuelta cada uno: justo después de un hito,
+  la simulación del siguiente puede fallar y reintentarse (el log dice "rechazaría").
 - `frontend/package-lock.json` y un `package-lock.json` vacío en la raíz
   están versionados por accidente; el lockfile real es `bun.lock`.
 

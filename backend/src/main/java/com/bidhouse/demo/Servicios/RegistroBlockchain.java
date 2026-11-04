@@ -19,6 +19,8 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
@@ -37,8 +39,8 @@ import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 public class RegistroBlockchain {
 
     static final long SEPOLIA = 11155111L;
-    // Suficiente para cualquier función del contrato (usan ~50-100 mil).
-    private static final BigInteger GAS_MAXIMO = BigInteger.valueOf(300_000);
+    // Margen sobre lo que estima la red, por si el costo cambia un poco antes del bloque.
+    private static final int MARGEN_GAS_PORCENTAJE = 125;
 
     private final Web3j red;
     private final RawTransactionManager firmante;
@@ -122,6 +124,8 @@ public class RegistroBlockchain {
     private String enviar(Function funcion) {
         if (!activo) throw new IllegalStateException("Blockchain no configurada");
         try {
+            String datos = FunctionEncoder.encode(funcion);
+            BigInteger gas = gasNecesario(funcion.getName(), datos);
             // Precio del gas: el doble de lo que pide la red. Si se ofrece justo lo
             // que dice eth_gasPrice y la tarifa base sube un poco antes del siguiente
             // bloque, la transacción queda atascada (pasó en la primera prueba). En
@@ -132,7 +136,7 @@ public class RegistroBlockchain {
             BigInteger precioGas = sugerido.max(tarifaBase == null ? BigInteger.ZERO : tarifaBase)
                     .multiply(BigInteger.TWO);
             EthSendTransaction envio = firmante.sendTransaction(
-                    precioGas, GAS_MAXIMO, contrato, FunctionEncoder.encode(funcion), BigInteger.ZERO);
+                    precioGas, gas, contrato, datos, BigInteger.ZERO);
             if (envio.hasError()) {
                 throw new IllegalStateException("La red rechazó la transacción: " + envio.getError().getMessage());
             }
@@ -147,6 +151,24 @@ public class RegistroBlockchain {
         } catch (IOException | org.web3j.protocol.exceptions.TransactionException e) {
             throw new IllegalStateException("No se pudo hablar con la red Sepolia: " + e.getMessage(), e);
         }
+    }
+
+    // Se le pregunta a la red en vez de usar un tope fijo: el costo de guardar
+    // datos cambia con las actualizaciones de Sepolia (registrarPago pasó de ~92
+    // mil a ~350 mil de gas sin tocar el contrato, y un tope de 300 mil hacía
+    // fallar cada intento). Además simula la llamada: si el contrato la va a
+    // rechazar, da error aquí y no se gasta ETH enviando una transacción perdida.
+    // Justo después de otro hito puede rechazar sin razón real: el nodo público
+    // aún no ve ese bloque. No pasa nada, se reintenta en la siguiente vuelta.
+    BigInteger gasNecesario(String nombreFuncion, String datos) throws IOException {
+        EthEstimateGas estimacion = red.ethEstimateGas(
+                Transaction.createEthCallTransaction(firmante.getFromAddress(), contrato, datos)).send();
+        if (estimacion.hasError()) {
+            throw new IllegalStateException("El contrato rechazaría " + nombreFuncion + ": "
+                    + estimacion.getError().getMessage());
+        }
+        return estimacion.getAmountUsed()
+                .multiply(BigInteger.valueOf(MARGEN_GAS_PORCENTAJE)).divide(BigInteger.valueOf(100));
     }
 
     // Saldo de la billetera (en wei), para avisar si se queda sin ETH de prueba.
