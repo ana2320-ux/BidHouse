@@ -209,10 +209,4 @@ returned as RFC 7807 Problem Details.
 - The session token lasts one hour and is not refreshed.
 - The catalog search box is not connected yet.
 
-## Contributing
 
-- Backend code, comments and commit messages are written in Spanish; prefix
-  commits with the area when it applies (`Backend: …`, `Frontend: …`).
-- Never commit `.env` files or real keys.
-- See [AGENTS.md](AGENTS.md) for detailed architecture notes, database
-  constraints and known pitfalls.
